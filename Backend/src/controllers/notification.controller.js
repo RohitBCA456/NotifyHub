@@ -71,10 +71,6 @@ export const sendNotification = async (notification) => {
       });
     }
 
-    await Notification.findByIdAndUpdate(notification._id, {
-      status: "sent",
-    });
-
     emitUser(notification.userId, "notification_sent", {
       notificationId: notification._id,
       channel,

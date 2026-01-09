@@ -71,6 +71,7 @@ async function subscribeToQueue(sendNotification) {
 
       await sendNotification(data);
       channel.ack(msg);
+
       console.log("Notification processed");
       await Notification.findByIdAndUpdate(data._id, { status: "sent" });
     } catch (error) {
