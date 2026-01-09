@@ -1,0 +1,96 @@
+import amqp from "amqplib";
+import { getDelayMs, isWithinQuietHours } from "../utils/quiteHours.helper.js";
+import { sendNotification } from "../controllers/notification.controller.js";
+import { Notification } from "../models/notification.model.js";
+
+let channel;
+let connection;
+
+const MAIN_QUEUE = "notification_queue";
+const DELAY_QUEUE = "notification_delay_queue";
+
+async function connect() {
+  try {
+    const RABBIT_URL = process.env.RABBIT_URL;
+    connection = await amqp.connect(RABBIT_URL);
+    channel = await connection.createChannel();
+
+    console.log("Connected to RabbitMQ");
+
+    await channel.assertQueue(MAIN_QUEUE, { durable: true });
+
+    await channel.assertQueue(DELAY_QUEUE, {
+      durable: true,
+      arguments: {
+        "x-dead-letter-exchange": "",
+        "x-dead-letter-routing-key": MAIN_QUEUE,
+      },
+    });
+
+    connection.on("close", () => {
+      console.error("RabbitMQ connection closed. Reconnecting...");
+      setTimeout(connect, 2000);
+    });
+
+    connection.on("error", (err) => {
+      console.error("RabbitMQ connection error:", err.message);
+    });
+  } catch (error) {
+    console.error("Failed to connect to RabbitMQ", error);
+    setTimeout(connect, 5000);
+  }
+}
+
+async function subscribeToQueue(sendNotification) {
+  if (!channel) {
+    await connect();
+  }
+
+  channel.consume(MAIN_QUEUE, async (msg) => {
+    if (!msg) return;
+
+    const data = JSON.parse(msg.content.toString());
+
+    try {
+      if (
+        data.quietHours?.enabled &&
+        isWithinQuietHours(data.quietHours.start, data.quietHours.end)
+      ) {
+        const delay = getDelayMs(data.quietHours.end);
+
+        console.log(`Message delayed for ${delay} ms due to quiet hours.`);
+
+        channel.sendToQueue(DELAY_QUEUE, Buffer.from(JSON.stringify(data)), {
+          expiration: delay.toString(),
+          persistent: true,
+        });
+
+        channel.ack(msg);
+        return;
+      }
+
+      await sendNotification(data);
+      channel.ack(msg);
+      console.log("Notification processed");
+      await Notification.findByIdAndUpdate(data._id, { status: "sent" });
+    } catch (error) {
+      console.error("Error processing notification:", error);
+
+      if (error.code === "EAUTH") {
+        channel.ack(msg);
+        return;
+      }
+
+      channel.nack(msg, false, true);
+    }
+  });
+}
+
+async function publishToQueue(MAIN_QUEUE, message) {
+  if (!channel) {
+    await connect();
+  }
+  channel.sendToQueue(MAIN_QUEUE, Buffer.from(JSON.stringify(message)));
+}
+
+export { subscribeToQueue, publishToQueue, connect };
