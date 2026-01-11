@@ -5,30 +5,54 @@ import LoginPage from "./pages/Login.page";
 import HeroSectionInbox from "./components/HeroSectionInProjects";
 import HeroSectionChannels from "./components/HeroSectionChannels";
 import HeroSectionDashboard from "./components/HeroSectionDashboard";
+import HeroSectionDocs from "./components/HeroSectionDocs";
+import ProfilePage from "./pages/Profile.page";
+import CreateProjectPage from "./pages/createProject.page";
+import SettingsPage from "./pages/setting.page";
+import ViewProject from "./pages/ViewProject.page";
 
 const router = createBrowserRouter([
   {
-    // Login page usually doesn't have the main navbar/footer
     path: "/",
     element: <LoginPage />,
   },
   {
     path: "/dashboard",
-    element: <RootLayout />, // The persistent shell
+    element: <RootLayout />,
     children: [
       {
-        index: true, // This shows when you hit /dashboard exactly
+        index: true,
         element: <HeroSectionDashboard />,
       },
       {
-        path: "projects", // Result: /dashboard/inbox
+        path: "projects",
         element: <HeroSectionInbox />,
       },
       {
-        path: "channels", // Result: /dashboard/channels
+        path: "channels",
         element: <HeroSectionChannels />,
       },
+      {
+        path: "docs",
+        element: <HeroSectionDocs />,
+      },
     ],
+  },
+  {
+    path: "/profile",
+    element: <ProfilePage />,
+  },
+  {
+    path: "/settings",
+    element: <SettingsPage />,
+  },
+  {
+    path: "createProject",
+    element: <CreateProjectPage />,
+  },
+  {
+    path: "viewProject",
+    element: <ViewProject />,
   },
 ]);
 
