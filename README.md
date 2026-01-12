@@ -160,7 +160,3 @@ npm run dev
 ## Contribution
 
 Contributions are welcome. Please fork the repository and submit a pull request with clear description.
-
-## License
-
-MIT License
