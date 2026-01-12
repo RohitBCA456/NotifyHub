@@ -5,6 +5,8 @@ import JWT from "jsonwebtoken";
 const userSchema = new Schema({
   username: { type: String, required: true, unique: true },
 
+  imageUrl: { type: String },
+
   email: { type: String, required: true, unique: true },
 
   sessionId: { type: String, required: true },

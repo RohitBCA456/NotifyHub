@@ -1,6 +1,6 @@
 import React from 'react';
 import { Bell, Github, Twitter, Linkedin, Mail, Heart } from 'lucide-react';
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme } from "../context/ThemeContext";
 
 const Footer = () => {
   const { isDarkMode } = useTheme();

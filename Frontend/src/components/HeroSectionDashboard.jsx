@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChevronRight, Play, Mail, Globe, MessageSquare, CheckCircle2 } from 'lucide-react';
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme } from "../context/ThemeContext";
 
 const HeroSectionDashboard = () => {
   const { isDarkMode } = useTheme();

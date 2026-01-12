@@ -1,6 +1,6 @@
 import React from 'react';
 import { Plus, Search, Hash, Settings, Users, Activity } from 'lucide-react';
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme } from "../context/ThemeContext";
 
 const HeroSectionChannels = () => {
   const { isDarkMode } = useTheme();

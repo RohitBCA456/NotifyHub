@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme } from "../context/ThemeContext";
 import { Zap, Activity, CheckCircle2, Clock } from 'lucide-react';
 import AnalyticsChart from '../components/Chart';
 import NotificationFeed from '../components/Notifcation';

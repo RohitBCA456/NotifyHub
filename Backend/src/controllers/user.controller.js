@@ -4,9 +4,9 @@ import { generateApiKey } from "../utils/generateApiKey.js";
 
 export const saveCredentials = async (req, res) => {
   try {
-    const { username, email, sessionId } = req.body;
+    const { username, imageUrl, email, sessionId } = req.body;
 
-    if (!username || !email || !sessionId) {
+    if (!username || !imageUrl || !email || !sessionId) {
       return res
         .status(400)
         .json({ message: "Username, email, and sessionId are required." });
@@ -17,7 +17,7 @@ export const saveCredentials = async (req, res) => {
     if (newUser) {
       newUser.sessionId = sessionId;
     } else {
-      newUser = await User.create({ username, email, sessionId });
+      newUser = await User.create({ username, imageUrl, email, sessionId });
     }
 
     newUser.webToken = await newUser.generateWebToken();

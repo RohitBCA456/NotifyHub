@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Search, MoreVertical, Webhook, Activity, AlertCircle, Key, Trash2 } from 'lucide-react';
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme } from "../context/ThemeContext";
 import { useNavigate } from 'react-router-dom';
 import ViewApiKey from './ViewApiKey';
 import Loader from "../components/Loader";

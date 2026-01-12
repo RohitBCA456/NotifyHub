@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Key, Copy, Eye, EyeOff, ShieldCheck, X, Check } from 'lucide-react';
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme } from "../context/ThemeContext";
 
 const ViewApiKey = ({ isOpen, onClose, projectName }) => {
   const { isDarkMode } = useTheme();

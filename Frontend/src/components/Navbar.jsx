@@ -14,16 +14,23 @@ import {
   FileText, // Import this for Docs
   Briefcase, // Import this for Projects
 } from "lucide-react";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme } from "../context/ThemeContext";
 import { Link, useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import Loader from "./Loader";
+import { useClerk } from "@clerk/clerk-react";
+import { useSelector, useDispatch } from "react-redux";
+import { clearUser } from "../Store/userSlice";
 
 const Navbar = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [loaderConfig, setLoaderConfig] = useState({ title: "", subtext: "" });
+  const user = useSelector((state) => state.user.userData);
+  const dispatch = useDispatch();
+
+  const { signOut } = useClerk();
 
   const { isDarkMode, toggleTheme } = useTheme();
   const location = useLocation();
@@ -61,7 +68,27 @@ const Navbar = () => {
     }
   }, [location.pathname]);
 
- const handleActionNavigation = (path, title, subtext) => {
+  const handleLogout = async () => {
+    setLoaderConfig({
+      title: "Signing out...",
+      subtext: "Securing your session and redirecting",
+    });
+    setIsRedirecting(true);
+    setIsProfileOpen(false);
+    dispatch(clearUser());
+
+    try {
+      // signOut() clears Clerk cookies and tokens
+      // redirectUrl: "/" will send them to your root route where
+      // your App.jsx/RootLayout SignedOut logic will trigger the login screen
+      await signOut(() => navigate("/"));
+    } catch (error) {
+      console.error("Logout failed:", error);
+      setIsRedirecting(false);
+    }
+  };
+
+  const handleActionNavigation = (path, title, subtext) => {
     setLoaderConfig({ title, subtext });
     setIsRedirecting(true);
     setIsProfileOpen(false);
@@ -76,11 +103,11 @@ const Navbar = () => {
   return (
     <>
       {isRedirecting && (
-        <Loader 
-          title={loaderConfig.title} 
-          subtext={loaderConfig.subtext} 
+        <Loader
+          title={loaderConfig.title}
+          subtext={loaderConfig.subtext}
           isDarkMode={isDarkMode}
-          fullScreen={true} 
+          fullScreen={true}
         />
       )}
 
@@ -188,15 +215,23 @@ const Navbar = () => {
                     isDarkMode ? "bg-slate-800" : "bg-slate-100"
                   }`}
                 >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-xs">
-                    JD
+                  <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 flex items-center justify-center bg-slate-200">
+                    {user?.imageUrl ? (
+                      <img
+                        src={user.imageUrl}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-xs font-bold text-slate-500">?</div>
+                    )}
                   </div>
                   <span
                     className={`hidden lg:block text-sm font-semibold ${
                       isDarkMode ? "text-slate-200" : "text-slate-700"
                     }`}
                   >
-                    John Doe
+                    {user?.username || user?.email?.split("@")[0] || "User"}
                   </span>
                 </button>
 
@@ -209,7 +244,13 @@ const Navbar = () => {
                     }`}
                   >
                     <button
-                     onClick={() => handleActionNavigation("/profile", "Accessing Profile...", "Loading your personal workspace")}
+                      onClick={() =>
+                        handleActionNavigation(
+                          "/profile",
+                          "Accessing Profile...",
+                          "Loading your personal workspace"
+                        )
+                      }
                       className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
                         isDarkMode
                           ? "text-slate-300 hover:bg-slate-800"
@@ -219,7 +260,13 @@ const Navbar = () => {
                       <User size={18} /> Profile
                     </button>
                     <button
-                     onClick={() => handleActionNavigation("/settings", "Opening Settings...", "Preparing your account configuration")}
+                      onClick={() =>
+                        handleActionNavigation(
+                          "/settings",
+                          "Opening Settings...",
+                          "Preparing your account configuration"
+                        )
+                      }
                       className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
                         isDarkMode
                           ? "text-slate-300 hover:bg-slate-800"
@@ -235,7 +282,7 @@ const Navbar = () => {
                     ></div>
                     <button
                       className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-red-500 hover:bg-red-50 transition-colors"
-                      onClick={() => console.log("Logging out...")}
+                      onClick={handleLogout}
                     >
                       <LogOut size={18} /> Logout
                     </button>

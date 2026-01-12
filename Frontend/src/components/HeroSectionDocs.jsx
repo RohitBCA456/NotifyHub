@@ -1,6 +1,6 @@
 import React from 'react';
 import { Copy, Terminal, Key, Rocket, Code2, CheckCircle2 } from 'lucide-react';
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme } from "../context/ThemeContext";
 
 const HeroSectionDocs = () => {
   const { isDarkMode } = useTheme();

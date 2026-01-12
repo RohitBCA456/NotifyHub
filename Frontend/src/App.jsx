@@ -1,7 +1,7 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { ThemeProvider } from "../context/ThemeContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import RootLayout from "./components/RootLayout";
-import LoginPage from "./pages/Login.page";
+import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
 import HeroSectionInbox from "./components/HeroSectionInProjects";
 import HeroSectionChannels from "./components/HeroSectionChannels";
 import HeroSectionDashboard from "./components/HeroSectionDashboard";
@@ -10,49 +10,68 @@ import ProfilePage from "./pages/Profile.page";
 import CreateProjectPage from "./pages/createProject.page";
 import SettingsPage from "./pages/setting.page";
 import ViewProject from "./pages/ViewProject.page";
+import AppWrapper from "./components/AppWrapper";
+import { Navigate } from "react-router-dom";
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <LoginPage />,
-  },
-  {
-    path: "/dashboard",
-    element: <RootLayout />,
+    element: <AppWrapper />,
     children: [
       {
-        index: true,
-        element: <HeroSectionDashboard />,
+        path: "/",
+        element: (
+          <>
+            <SignedIn>
+              {/* If signed in, automatically move them to the dashboard */}
+              <Navigate to="/dashboard" replace />
+            </SignedIn>
+            <SignedOut>
+              {/* If signed out, force the Clerk Auth screen */}
+              <RedirectToSignIn />
+            </SignedOut>
+          </>
+        ),
       },
       {
-        path: "projects",
-        element: <HeroSectionInbox />,
+        path: "/dashboard",
+        element: <RootLayout />,
+        children: [
+          {
+            index: true,
+            element: <HeroSectionDashboard />,
+          },
+          {
+            path: "projects",
+            element: <HeroSectionInbox />,
+          },
+          {
+            path: "channels",
+            element: <HeroSectionChannels />,
+          },
+          {
+            path: "docs",
+            element: <HeroSectionDocs />,
+          },
+        ],
       },
       {
-        path: "channels",
-        element: <HeroSectionChannels />,
+        path: "/profile",
+        element: <ProfilePage />,
       },
       {
-        path: "docs",
-        element: <HeroSectionDocs />,
+        path: "/settings",
+        element: <SettingsPage />,
+      },
+      {
+        path: "createProject",
+        element: <CreateProjectPage />,
+      },
+      {
+        path: "viewProject",
+        element: <ViewProject />,
       },
     ],
-  },
-  {
-    path: "/profile",
-    element: <ProfilePage />,
-  },
-  {
-    path: "/settings",
-    element: <SettingsPage />,
-  },
-  {
-    path: "createProject",
-    element: <CreateProjectPage />,
-  },
-  {
-    path: "viewProject",
-    element: <ViewProject />,
   },
 ]);
 
