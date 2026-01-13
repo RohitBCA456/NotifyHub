@@ -2,7 +2,7 @@ import mongoose, { Schema } from "mongoose";
 
 const userPreferenceSchema = new Schema(
   {
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    appId: { type: Schema.Types.ObjectId, ref: "User", required: true },
 
     preferences: {
       email: { type: Boolean, default: false },

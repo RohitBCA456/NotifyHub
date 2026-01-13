@@ -90,7 +90,7 @@ export const createApp = async (req, res) => {
     });
 
     await UserPreference.findOneAndUpdate(
-      { userId },
+      { appId: newApp._id },
       {
         $set: {
           "preferences.email": channel.includes("email"),
@@ -182,6 +182,8 @@ export const deleteProject = async (req, res) => {
 
     const deleteResult = await Notification.deleteMany({ appId: projectId });
 
+    await UserPreference.deleteOne({ appId: projectId })
+
     return res.status(200).json({
       message: "Project and all associated notifications deleted successfully.",
     });
@@ -190,3 +192,4 @@ export const deleteProject = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+

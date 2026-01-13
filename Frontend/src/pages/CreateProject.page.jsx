@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import ApiKeyDisplay from "../components/ApiKeyDisplay";
 import Loader from "../components/Loader";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 const CreateProjectPage = () => {
   const { isDarkMode } = useTheme();
@@ -32,7 +33,7 @@ const CreateProjectPage = () => {
   };
 
   const handleCreate = async () => {
-    if (!projectName) return alert("Please enter a project name");
+    if (!projectName) return toast.error("Please enter a project name");
 
     // Convert {email: true, inApp: true} -> ["email", "inapp"]
     const selectedChannels = Object.keys(preferences).filter(
@@ -40,7 +41,7 @@ const CreateProjectPage = () => {
     );
 
     if (selectedChannels.length === 0) {
-      return alert("Please select at least one notification channel");
+      return toast.error("Please select at least one notification channel");
     }
 
     try {
@@ -57,6 +58,8 @@ const CreateProjectPage = () => {
         }
       );
 
+      toast.success("Project created successfully.");
+
       setGeneratedKey(response.data.app.apiKey);
       setStep(3);
     } catch (error) {
@@ -68,7 +71,7 @@ const CreateProjectPage = () => {
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    alert("Copied to clipboard!");
+    toast.success("Copied to Clipboard!");
   };
 
   return (

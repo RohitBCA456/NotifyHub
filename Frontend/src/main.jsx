@@ -4,6 +4,7 @@ import App from "./App.jsx";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { store } from "./Store/store.js";
 import { Provider as ReduxProvider } from "react-redux";
+import { Toaster } from "react-hot-toast";
 
 // 1. Import React Query components
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -30,6 +31,7 @@ createRoot(document.getElementById("root")).render(
     <ReduxProvider store={store}>
       {/* 3. Wrap everything inside QueryClientProvider */}
       <QueryClientProvider client={queryClient}>
+        <Toaster />
         <App />
       </QueryClientProvider>
     </ReduxProvider>

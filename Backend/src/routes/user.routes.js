@@ -14,6 +14,6 @@ router.route("/save-credentials").post(saveCredentials);
 router.route("/logout").get(verifyAuthentication, logoutUser);
 router.route("/create-app").post(verifyAuthentication, createApp);
 router.route("/fetch-projects").get(verifyAuthentication, fetchProjects);
-router.route("/delete-project").post(deleteProject);
+router.route("/delete-project").post(verifyAuthentication, deleteProject);
 
 export { router as userRoutes };

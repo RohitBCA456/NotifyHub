@@ -85,3 +85,50 @@ export const sendNotification = async (notification) => {
     throw error;
   }
 };
+
+export const updateNotificationPreference = async (req, res) => {
+  try {
+    const { appId, preferences } = req.body;
+
+    if (!appId || !preferences) {
+      return res.status(400).json({ message: "Fields are missing." });
+    }
+
+    await UserPreference.findOneAndUpdate(
+      { appId },
+      { $set: { preferences } },
+      { upsert: true, new: true }
+    );
+
+    return res.status(200).json({ message: "Updated Preference successfully" });
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getNotificationPreference = async (req, res) => {
+  try {
+    const { appId } = req.params;
+
+    const preference = await UserPreference.findOne({ 
+      appId, 
+      userId: req.userId 
+    });
+
+    if (!preference) {
+      return res.status(200).json({
+        preferences: {
+          email: false,
+          sms: false,
+          inapp: false
+        }
+      });
+    }
+
+    return res.status(200).json(preference);
+  } catch (error) {
+    console.error("Get Preference Error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};

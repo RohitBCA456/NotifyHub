@@ -15,6 +15,7 @@ import ViewApiKey from "./ViewApiKey";
 import Loader from "../components/Loader";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 const HeroSectionProjects = () => {
   const { isDarkMode } = useTheme();
@@ -56,7 +57,7 @@ const HeroSectionProjects = () => {
       console.log("Full Backend Response:", response.data);
       return response.data.apps;
     },
-    refetchInterval: 2000,
+    refetchInterval: 1000,
   });
 
  const handleDeletion = async (projectId) => {
@@ -69,7 +70,7 @@ const HeroSectionProjects = () => {
       { withCredentials: true }
     );
 
-    console.log("Success:", response.data);
+    toast.success("Project Deleted successfully.");
   } catch (error) {
     console.error("Deletion Error:", error.response?.data?.message || error.message);
   }
@@ -173,7 +174,7 @@ const HeroSectionProjects = () => {
             {filteredProjects.map((project) => (
               <div
                 key={project._id}
-                onClick={() => handleActionNavigation("/viewProject")}
+                onClick={() => handleActionNavigation(`/viewProject/${project._id}`)}
                 className={`group p-6 rounded-3xl border transition-all hover:-translate-y-1 cursor-pointer relative ${
                   isDarkMode
                     ? "bg-slate-900/50 border-slate-800 hover:border-blue-500/50 hover:bg-slate-900"

@@ -12,6 +12,7 @@ import SettingsPage from "./pages/setting.page";
 import ViewProject from "./pages/ViewProject.page";
 import AppWrapper from "./components/AppWrapper";
 import { Navigate } from "react-router-dom";
+import NotificationPreferencePage from "./pages/NotificationPreference.page";
 
 const router = createBrowserRouter([
   {
@@ -68,9 +69,13 @@ const router = createBrowserRouter([
         element: <CreateProjectPage />,
       },
       {
-        path: "viewProject",
+        path: "viewProject/:projectId",
         element: <ViewProject />,
       },
+      {
+        path: "updatePreference/:appId",
+        element: <NotificationPreferencePage />
+      }
     ],
   },
 ]);

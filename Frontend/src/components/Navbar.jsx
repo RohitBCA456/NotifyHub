@@ -21,6 +21,7 @@ import Loader from "./Loader";
 import { useClerk } from "@clerk/clerk-react";
 import { useSelector, useDispatch } from "react-redux";
 import { clearUser } from "../Store/userSlice";
+import toast from "react-hot-toast";
 
 const Navbar = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -81,7 +82,9 @@ const Navbar = () => {
       // signOut() clears Clerk cookies and tokens
       // redirectUrl: "/" will send them to your root route where
       // your App.jsx/RootLayout SignedOut logic will trigger the login screen
-      await signOut(() => navigate("/"));
+      await signOut(() => 
+        toast.success("Logout successfully."),
+        navigate("/"));
     } catch (error) {
       console.error("Logout failed:", error);
       setIsRedirecting(false);
