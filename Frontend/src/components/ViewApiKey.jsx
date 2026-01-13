@@ -2,15 +2,17 @@ import React, { useState } from 'react';
 import { Key, Copy, Eye, EyeOff, ShieldCheck, X, Check } from 'lucide-react';
 import { useTheme } from "../context/ThemeContext";
 
-const ViewApiKey = ({ isOpen, onClose, projectName }) => {
+// Added apiKey to the destructured props
+const ViewApiKey = ({ isOpen, onClose, projectName, apiKey }) => {
   const { isDarkMode } = useTheme();
   const [showKey, setShowKey] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Hardcoded mock key
-  const apiKey = "nh_live_7721x_9902l_v2_secret_key";
+  // Fallback in case the apiKey prop is undefined
+  const displayKey = apiKey || "Key not found";
 
   const handleCopy = () => {
+    if (!apiKey) return;
     navigator.clipboard.writeText(apiKey);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -50,7 +52,7 @@ const ViewApiKey = ({ isOpen, onClose, projectName }) => {
             Project API Key
           </h2>
           <p className="text-sm opacity-50 font-medium">
-            Workspace: <span className="text-blue-500">{projectName}</span>
+            Workspace: <span className="text-blue-500">{projectName || "Default"}</span>
           </p>
         </div>
 
@@ -64,20 +66,24 @@ const ViewApiKey = ({ isOpen, onClose, projectName }) => {
               isDarkMode ? "bg-black/50 border-slate-800 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-600"
             }`}>
               <div className="flex-1 truncate">
-                {showKey ? apiKey : "••••••••••••••••••••••••••••••••"}
+                {/* Updated to use displayKey (prop) */}
+                {showKey ? displayKey : "••••••••••••••••••••••••••••••••"}
               </div>
               <div className="flex items-center gap-1">
                 <button 
                   onClick={() => setShowKey(!showKey)}
                   className={`p-2 rounded-lg transition-colors ${isDarkMode ? "hover:bg-slate-800" : "hover:bg-white shadow-sm"}`}
+                  title={showKey ? "Hide key" : "Show key"}
                 >
                   {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
                 <button 
                   onClick={handleCopy}
+                  disabled={!apiKey}
                   className={`p-2 rounded-lg transition-all ${
                     copied ? "text-emerald-500" : (isDarkMode ? "hover:bg-slate-800" : "hover:bg-white shadow-sm")
-                  }`}
+                  } ${!apiKey && "opacity-50 cursor-not-allowed"}`}
+                  title="Copy to clipboard"
                 >
                   {copied ? <Check size={16} /> : <Copy size={16} />}
                 </button>

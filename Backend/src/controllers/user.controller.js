@@ -1,6 +1,9 @@
 import { User } from "../models/user.model.js";
 import { App } from "../models/app.model.js";
 import { generateApiKey } from "../utils/generateApiKey.js";
+import { UserPreference } from "../models/userPreference.model.js";
+import { Notification } from "../models/notification.model.js";
+import mongoose from "mongoose";
 
 export const saveCredentials = async (req, res) => {
   try {
@@ -20,11 +23,21 @@ export const saveCredentials = async (req, res) => {
       newUser = await User.create({ username, imageUrl, email, sessionId });
     }
 
-    newUser.webToken = await newUser.generateWebToken();
+    const webToken = await newUser.generateWebToken();
+
+    newUser.webToken = webToken;
 
     await newUser.save();
 
+    const options = {
+      httpOnly: true,
+      secure: false,
+      path: "/",
+      sameSite: "lax",
+    };
+
     return res
+      .cookie("webToken", webToken, options)
       .status(201)
       .json({ message: "User credentials saved successfully.", user: newUser });
   } catch (error) {
@@ -40,7 +53,17 @@ export const logoutUser = async (req, res) => {
 
     await User.findByIdAndUpdate(userId, { webToken: null, sessionId: null });
 
-    return res.status(200).json({ message: "User logged out successfully." });
+    const options = {
+      httpOnly: true,
+      secure: false,
+      path: "/",
+      sameSite: "lax",
+    };
+
+    return res
+      .clearCookie("webToken", options)
+      .status(200)
+      .json({ message: "User logged out successfully." });
   } catch (error) {
     return res
       .status(500)
@@ -57,7 +80,26 @@ export const createApp = async (req, res) => {
       return res.status(400).json({ message: "App name is required." });
     }
 
-    const newApp = await App.create({ name, userId, channel, apiKey: generateApiKey() });
+    const activeChannels = Array.isArray(channel) ? channel : [];
+
+    const newApp = await App.create({
+      name,
+      userId,
+      channel: activeChannels,
+      apiKey: generateApiKey(),
+    });
+
+    await UserPreference.findOneAndUpdate(
+      { userId },
+      {
+        $set: {
+          "preferences.email": channel.includes("email"),
+          "preferences.sms": channel.includes("sms"),
+          "preferences.inapp": channel.includes("inapp"),
+        },
+      },
+      { upsert: true }
+    );
 
     return res
       .status(201)
@@ -66,5 +108,85 @@ export const createApp = async (req, res) => {
     return res
       .status(500)
       .json({ message: "Internal server error.", error: error.message });
+  }
+};
+
+export const fetchProjects = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const fiveDaysAgo = new Date();
+    fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+
+    const apps = await App.aggregate([
+      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+
+      {
+        $lookup: {
+          from: "notification",
+          localField: "_id",
+          foreignField: "appId",
+          as: "appNotifications",
+        },
+      },
+
+      {
+        $addFields: {
+          lastActive: { $max: "$appNotifications.createdAt" },
+        },
+      },
+
+      {
+        $addFields: {
+          status: {
+            $cond: {
+              if: {
+                $and: [
+                  { $ne: ["$lastActive", null] },
+                  { $gt: ["$lastActive", fiveDaysAgo] },
+                ],
+              },
+              then: "Active",
+              else: "Inactive",
+            },
+          },
+        },
+      },
+
+      { $project: { appNotifications: 0 } },
+
+      { $sort: { status: 1, lastActive: -1 } },
+    ]);
+
+    return res.status(200).json({
+      apps: apps || [],
+    });
+  } catch (error) {
+    console.error("Aggregation Error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const deleteProject = async (req, res) => {
+  try {
+    const { projectId } = req.body;
+
+    if (!projectId) {
+      return res.status(400).json({ message: "ProjectId is required." });
+    }
+
+    const deletedApp = await App.findByIdAndDelete(projectId);
+
+    if (!deletedApp) {
+      return res.status(404).json({ message: "Project not found." });
+    }
+
+    const deleteResult = await Notification.deleteMany({ appId: projectId });
+
+    return res.status(200).json({
+      message: "Project and all associated notifications deleted successfully.",
+    });
+  } catch (error) {
+    console.error("Delete Error:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };

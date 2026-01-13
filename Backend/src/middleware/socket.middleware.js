@@ -1,4 +1,4 @@
-import { App } from "../src/models/app.model.js";
+import { App } from "../models/app.model.js";
 
 export function initInAppSocket(io) {
   const inApp = io.of("/inapp");

@@ -26,6 +26,7 @@ const UserSync = () => {
             "http://localhost:3000/api/users/save-credentials",
             {
               method: "POST",
+              credentials: "include",
               headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,

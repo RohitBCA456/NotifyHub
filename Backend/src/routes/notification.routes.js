@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { createNotification } from "../controllers/notification.controller.js";
-import { verifyAuthentication } from "../../middleware/auth.middleware.js";
+import { verifyAuthentication } from "../middleware/auth.middleware.js";
 
 const router = Router();
 

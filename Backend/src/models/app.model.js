@@ -5,7 +5,7 @@ const appSchema = new Schema({
 
   userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
 
-  channel: { type: String, required: true },
+  channel: [{ type: String, required: true }],
 
   apiKey: { type: String, required: true, unique: true },
 
