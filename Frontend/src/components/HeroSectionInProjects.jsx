@@ -256,7 +256,7 @@ const HeroSectionProjects = () => {
                     isDarkMode ? "text-slate-500" : "text-slate-400"
                   }`}
                 >
-                  <Activity size={14} /> Last active: {project.lastActive}
+                  <Activity size={14} /> Last active: {project.lastActive || "N/A"}
                 </p>
 
                 <div
@@ -302,7 +302,7 @@ const HeroSectionProjects = () => {
                         isDarkMode ? "text-slate-300" : "text-slate-700"
                       }`}
                     >
-                      {project.requests || "0"}
+                      {project.totalRequest || "0"}
                     </span>
                   </div>
                 </div>

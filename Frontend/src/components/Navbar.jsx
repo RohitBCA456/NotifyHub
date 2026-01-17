@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   FileText, // Import this for Docs
   Briefcase, // Import this for Projects
+  Info,
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { Link, useLocation } from "react-router-dom";
@@ -52,7 +53,7 @@ const Navbar = () => {
       path: "/dashboard/projects",
       icon: <Briefcase size={16} />,
     },
-    { name: "Channels", path: "/dashboard/channels", icon: <Hash size={16} /> },
+    { name: "About", path: "/dashboard/about", icon: <Info size={16} /> },
     { name: "Docs", path: "/dashboard/docs", icon: <FileText size={16} /> },
   ];
 

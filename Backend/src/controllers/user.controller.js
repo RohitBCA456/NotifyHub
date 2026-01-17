@@ -98,7 +98,7 @@ export const createApp = async (req, res) => {
           "preferences.inapp": channel.includes("inapp"),
         },
       },
-      { upsert: true }
+      { upsert: true },
     );
 
     return res
@@ -122,7 +122,7 @@ export const fetchProjects = async (req, res) => {
 
       {
         $lookup: {
-          from: "notification",
+          from: "notifications",
           localField: "_id",
           foreignField: "appId",
           as: "appNotifications",
@@ -132,6 +132,7 @@ export const fetchProjects = async (req, res) => {
       {
         $addFields: {
           lastActive: { $max: "$appNotifications.createdAt" },
+          totalRequest: { $size: "$appNotifications" },
         },
       },
 
@@ -141,8 +142,13 @@ export const fetchProjects = async (req, res) => {
             $cond: {
               if: {
                 $and: [
-                  { $ne: ["$lastActive", null] },
-                  { $gt: ["$lastActive", fiveDaysAgo] },
+                  {
+                    $gt: [
+                      { $ifNull: ["$lastActive", new Date(0)] },
+                      fiveDaysAgo,
+                    ],
+                  },
+                  { $gt: ["$totalRequest", 0] },
                 ],
               },
               then: "Active",
@@ -153,7 +159,6 @@ export const fetchProjects = async (req, res) => {
       },
 
       { $project: { appNotifications: 0 } },
-
       { $sort: { status: 1, lastActive: -1 } },
     ]);
 
@@ -182,7 +187,7 @@ export const deleteProject = async (req, res) => {
 
     const deleteResult = await Notification.deleteMany({ appId: projectId });
 
-    await UserPreference.deleteOne({ appId: projectId })
+    await UserPreference.deleteOne({ appId: projectId });
 
     return res.status(200).json({
       message: "Project and all associated notifications deleted successfully.",
@@ -192,4 +197,3 @@ export const deleteProject = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-

@@ -1,9 +1,11 @@
 import React from 'react';
 import { ChevronRight, Play, Mail, Globe, MessageSquare, CheckCircle2 } from 'lucide-react';
 import { useTheme } from "../context/ThemeContext";
+import { useNavigate } from 'react-router-dom';
 
 const HeroSectionDashboard = () => {
   const { isDarkMode } = useTheme();
+  const navigate = useNavigate();
 
   // Hardcoded notification data for the mockup
   const mockNotifications = [
@@ -61,7 +63,9 @@ const HeroSectionDashboard = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-            <button className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl shadow-xl shadow-blue-500/25 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2">
+            <button 
+            onClick={() => navigate("./projects")}
+            className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl shadow-xl shadow-blue-500/25 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-2">
               Start Building Free
               <ChevronRight size={20} />
             </button>

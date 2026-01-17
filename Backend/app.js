@@ -5,6 +5,7 @@ import { userRoutes } from "./src/routes/user.routes.js";
 import { notificationRoutes } from "./src/routes/notification.routes.js";
 import cookieParser from "cookie-parser";
 import http from "http";
+import { analyticsRouter } from "./src/routes/analytics.routes.js";
 
 dotenv.config({ path: "./.env" });
 
@@ -25,5 +26,6 @@ app.use(cors({
 
 app.use("/api/users", userRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/analytics", analyticsRouter);
 
 export { app, server };
