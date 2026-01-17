@@ -64,7 +64,7 @@ const HeroSectionProjects = () => {
   console.log("Attempting to delete ID:", projectId);
 
   try {
-    const response = await axios.post(
+    const response = await axios.delete(
       "http://localhost:3000/api/users/delete-project",
       { projectId },
       { withCredentials: true }
