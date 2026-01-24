@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
 import { Zap, Activity, CheckCircle2, Clock } from "lucide-react";
 import AnalyticsChart from "../components/Chart";
@@ -10,6 +10,8 @@ const ViewProjectPage = () => {
   const { isDarkMode } = useTheme();
   const navigate = useNavigate();
   const { projectId } = useParams();
+  const [stats, setStats] = useState({ totalSent: "0", successRate: "0%" });
+  const [loading, setLoading] = useState(true);
   
   // // State to control the display of your custom Loader
   const [isNavigating, setIsNavigating] = useState(false);
@@ -23,6 +25,22 @@ const ViewProjectPage = () => {
       navigate(`/updatePreference/${projectId}`);
     }, 1000); 
   };
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/analytics/project-stats/${projectId}`);
+        const data = await response.json();
+        setStats(data);
+      } catch (err) {
+        console.error("Stats fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, [projectId]);
 
   // If navigating, return only the Loader component
   if (isNavigating) {
@@ -82,23 +100,17 @@ const ViewProjectPage = () => {
         </div>
 
         {/* Top Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
           <StatCard
             icon={<Activity />}
-            label="Total Sent"
-            value="84,209"
+            label="Total Notifications"
+            value={loading ? "..." : stats.totalSent}
             isDarkMode={isDarkMode}
           />
           <StatCard
             icon={<CheckCircle2 />}
             label="Success Rate"
-            value="99.9%"
-            isDarkMode={isDarkMode}
-          />
-          <StatCard
-            icon={<Clock />}
-            label="Avg. Latency"
-            value="84ms"
+            value={loading ? "..." : stats.successRate}
             isDarkMode={isDarkMode}
           />
         </div>
