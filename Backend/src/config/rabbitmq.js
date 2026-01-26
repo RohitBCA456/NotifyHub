@@ -5,6 +5,7 @@ import { Notification } from "../models/notification.model.js";
 
 let channel;
 let connection;
+let isConsuming = false;
 
 const MAIN_QUEUE = "notification_queue";
 const DELAY_QUEUE = "notification_delay_queue";
@@ -14,6 +15,8 @@ async function connect() {
     const RABBIT_URL = process.env.RABBIT_URL;
     connection = await amqp.connect(RABBIT_URL);
     channel = await connection.createChannel();
+
+    await channel.prefetch(1);
 
     console.log("Connected to RabbitMQ");
 
@@ -29,22 +32,27 @@ async function connect() {
 
     connection.on("close", () => {
       console.error("RabbitMQ connection closed. Reconnecting...");
-      setTimeout(connect, 2000);
+      channel = null;
+      isConsuming = false;
+      setTimeout(connect, 3000);
     });
 
     connection.on("error", (err) => {
       console.error("RabbitMQ connection error:", err.message);
     });
+
+    await subscribeToQueue();
   } catch (error) {
-    console.error("Failed to connect to RabbitMQ", error);
+    console.error("Failed to connect to RabbitMQ:", error.message);
+    channel = null;
     setTimeout(connect, 5000);
   }
 }
 
-async function subscribeToQueue(sendNotification) {
-  if (!channel) {
-    await connect();
-  }
+async function subscribeToQueue() {
+  if (!channel || isConsuming) return;
+
+  isConsuming = true;
 
   channel.consume(MAIN_QUEUE, async (msg) => {
     if (!msg) return;
@@ -58,8 +66,6 @@ async function subscribeToQueue(sendNotification) {
       ) {
         const delay = getDelayMs(data.quietHours.end);
 
-        console.log(`Message delayed for ${delay} ms due to quiet hours.`);
-
         channel.sendToQueue(DELAY_QUEUE, Buffer.from(JSON.stringify(data)), {
           expiration: delay.toString(),
           persistent: true,
@@ -70,12 +76,12 @@ async function subscribeToQueue(sendNotification) {
       }
 
       await sendNotification(data);
-      channel.ack(msg);
-
-      console.log("Notification processed");
       await Notification.findByIdAndUpdate(data._id, { status: "sent" });
+
+      channel.ack(msg);
+      console.log("Notification processed");
     } catch (error) {
-      console.error("Error processing notification:", error);
+      console.error("Error processing notification:", error.message);
 
       if (error.code === "EAUTH") {
         channel.ack(msg);
@@ -87,11 +93,13 @@ async function subscribeToQueue(sendNotification) {
   });
 }
 
-async function publishToQueue(MAIN_QUEUE, message) {
-  if (!channel) {
-    await connect();
-  }
-  channel.sendToQueue(MAIN_QUEUE, Buffer.from(JSON.stringify(message)));
+async function publishToQueue(queueName, message) {
+  if (!channel) await connect();
+  if (!channel) return;
+
+  channel.sendToQueue(queueName, Buffer.from(JSON.stringify(message)), {
+    persistent: true,
+  });
 }
 
-export { subscribeToQueue, publishToQueue, connect };
+export { connect, publishToQueue };

@@ -1,9 +1,5 @@
 import { server } from "./app.js";
 import { connectDB } from "./src/config/db.js";
-import { subscribeToQueue } from "./src/config/rabbitmq.js";
-import { sendNotification } from "./src/controllers/notification.controller.js";
-
-subscribeToQueue(sendNotification);
 
 connectDB()
   .then(() => {

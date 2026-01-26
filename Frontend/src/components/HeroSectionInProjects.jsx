@@ -41,6 +41,27 @@ const HeroSectionProjects = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  function timeAgo(date) {
+    const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+
+    const intervals = {
+      year: 31536000,
+      month: 2592000,
+      day: 86400,
+      hour: 3600,
+      minute: 60,
+    };
+
+    for (const [unit, value] of Object.entries(intervals)) {
+      const count = Math.floor(seconds / value);
+      if (count >= 1) {
+        return `${count} ${unit}${count > 1 ? "s" : ""} ago`;
+      }
+    }
+
+    return "Just now";
+  }
+
   const {
     data: projects = [],
     isLoading,
@@ -52,7 +73,7 @@ const HeroSectionProjects = () => {
         "http://localhost:3000/api/users/fetch-projects",
         {
           withCredentials: true,
-        }
+        },
       );
       console.log("Full Backend Response:", response.data);
       return response.data.apps;
@@ -60,24 +81,27 @@ const HeroSectionProjects = () => {
     refetchInterval: 1000,
   });
 
- const handleDeletion = async (projectId) => {
-  console.log("Attempting to delete ID:", projectId);
+  const handleDeletion = async (projectId) => {
+    console.log("Attempting to delete ID:", projectId);
 
-  try {
-    const response = await axios.delete(
-      "http://localhost:3000/api/users/delete-project",
-      { projectId },
-      { withCredentials: true }
-    );
+    try {
+      const response = await axios.delete(
+        "http://localhost:3000/api/users/delete-project",
+        { projectId },
+        { withCredentials: true },
+      );
 
-    toast.success("Project Deleted successfully.");
-  } catch (error) {
-    console.error("Deletion Error:", error.response?.data?.message || error.message);
-  }
-};
+      toast.success("Project Deleted successfully.");
+    } catch (error) {
+      console.error(
+        "Deletion Error:",
+        error.response?.data?.message || error.message,
+      );
+    }
+  };
 
   const filteredProjects = projects.filter((project) =>
-    project.name.toLowerCase().includes(searchQuery.toLowerCase())
+    project.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const handleActionNavigation = (path) => {
@@ -174,7 +198,9 @@ const HeroSectionProjects = () => {
             {filteredProjects.map((project) => (
               <div
                 key={project._id}
-                onClick={() => handleActionNavigation(`/viewProject/${project._id}`)}
+                onClick={() =>
+                  handleActionNavigation(`/viewProject/${project._id}`)
+                }
                 className={`group p-6 rounded-3xl border transition-all hover:-translate-y-1 cursor-pointer relative ${
                   isDarkMode
                     ? "bg-slate-900/50 border-slate-800 hover:border-blue-500/50 hover:bg-slate-900"
@@ -227,7 +253,7 @@ const HeroSectionProjects = () => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDeletion(project._id)
+                            handleDeletion(project._id);
                             console.log("Delete Project");
                           }}
                           className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors text-red-500 ${
@@ -256,7 +282,8 @@ const HeroSectionProjects = () => {
                     isDarkMode ? "text-slate-500" : "text-slate-400"
                   }`}
                 >
-                  <Activity size={14} /> Last active: {project.lastActive || "N/A"}
+                  <Activity size={14} /> Last active:{" "}
+                  {timeAgo(project.lastActive) || "N/A"}
                 </p>
 
                 <div
@@ -279,13 +306,10 @@ const HeroSectionProjects = () => {
                         project.status === "Inactive"
                           ? "text-red-500"
                           : project.status === "Active"
-                          ? "text-emerald-500"
-                          : "text-slate-400"
+                            ? "text-emerald-500"
+                            : "text-slate-400"
                       }`}
                     >
-                      {project.status === "Inactive" && (
-                        <AlertCircle size={14} />
-                      )}
                       {project.status}
                     </span>
                   </div>
