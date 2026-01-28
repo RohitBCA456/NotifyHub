@@ -53,35 +53,41 @@ export const createNotification = async (req, res) => {
 
 export const sendNotification = async (notification) => {
   try {
-    const { channel, to, subject, message } = notification;
+    const { channel, to, subject, message, userId, _id, appId } = notification;
 
     if (channel === "email") {
       await sendEmail(to, subject, message);
-    }
-
-    if (channel === "sms") {
+      
+      emitUser(userId, "notification_sent", {
+        notificationId: _id,
+        userId: userId,
+        channel: channel,
+        status: "sent",
+        message: message,
+        createdAt: new Date(),
+      });
+    } else if (channel === "sms") {
       await sendSMS(to, message);
-    }
 
-    if (channel === "inapp") {
-      emitInApp(notification.appId, notification.userId, {
-        notificationId: notification._id,
+      emitUser(userId, "notification_sent", {
+        notificationId: _id,
+        userId: userId,
+        channel: channel,
+        status: "sent",
+        message: message,
+        createdAt: new Date(),
+      });
+    } else if (channel === "inapp") {
+      emitInApp(appId, userId, {
+        notificationId: _id,
         message,
         timestamp: Date.now(),
       });
     }
-
-    emitUser(notification.userId, "notification_sent", {
-      notificationId: notification._id,
-      channel,
-      status: "sent",
-      timestamp: Date.now(),
-    });
   } catch (error) {
     await Notification.findByIdAndUpdate(notification._id, {
       status: "failed",
     });
-
     throw error;
   }
 };
@@ -97,12 +103,12 @@ export const updateNotificationPreference = async (req, res) => {
     await UserPreference.findOneAndUpdate(
       { appId },
       { $set: { preferences } },
-      { upsert: true, new: true }
+      { upsert: true, new: true },
     );
 
     return res.status(200).json({ message: "Updated Preference successfully" });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -111,9 +117,9 @@ export const getNotificationPreference = async (req, res) => {
   try {
     const { appId } = req.params;
 
-    const preference = await UserPreference.findOne({ 
-      appId, 
-      userId: req.userId 
+    const preference = await UserPreference.findOne({
+      appId,
+      userId: req.userId,
     });
 
     if (!preference) {
@@ -121,8 +127,8 @@ export const getNotificationPreference = async (req, res) => {
         preferences: {
           email: false,
           sms: false,
-          inapp: false
-        }
+          inapp: false,
+        },
       });
     }
 

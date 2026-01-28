@@ -12,8 +12,10 @@ export function initSocket(server) {
   uiNamespace.on("connection", (socket) => {
     console.log("UI client connected:", socket.id);
 
-    socket.on("join", (userId) => {
-      socket.join(userId);
+   socket.on("join", (userId) => {
+      const room = String(userId);
+      socket.join(room);
+      console.log(`User ${userId} joined room. Current rooms:`, socket.rooms);
     });
 
     socket.on("disconnect", () => {

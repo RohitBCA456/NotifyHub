@@ -10,6 +10,8 @@ const client = twilio(
 );
 
 export const sendSMS = async (to, message) => {
+
+  console.log(to, message);
   try {
     const response = await client.messages.create({
       body: message,

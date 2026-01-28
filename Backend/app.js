@@ -17,9 +17,11 @@ const server = http.createServer(app);
 
 initSocket(server);
 
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
 connect();
 
 app.use(

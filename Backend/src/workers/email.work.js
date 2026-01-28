@@ -2,6 +2,8 @@ import nodemailer from "nodemailer";
 
 export const sendEmail = async (to, subject, text) => {
 
+  console.log(to, subject, text)
+
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {

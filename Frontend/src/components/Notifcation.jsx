@@ -8,6 +8,8 @@ const socket = io("http://localhost:3000/ui", { autoConnect: false });
 const NotificationFeed = ({ isDarkMode, currentUserId }) => {
   const [feedItems, setFeedItems] = useState([]);
 
+  console.log(currentUserId);
+
   useEffect(() => {
     // 1. Establish connection and join the user-specific room
     socket.connect();
@@ -47,7 +49,7 @@ const NotificationFeed = ({ isDarkMode, currentUserId }) => {
           <p className="text-center py-10 opacity-40 text-sm">No activity detected yet...</p>
         )}
         {feedItems.map((item) => (
-          <div key={item._id || item.id} className={`flex flex-col md:flex-row md:items-center justify-between p-5 rounded-2xl border transition-all ${
+          <div key={item.notificationId} className={`flex flex-col md:flex-row md:items-center justify-between p-5 rounded-2xl border transition-all ${
             isDarkMode ? "bg-slate-800/40 border-slate-800 hover:bg-slate-800/60" : "bg-slate-50 border-slate-100 hover:bg-slate-100/50"
           }`}>
             <div className="flex items-center gap-4 mb-4 md:mb-0">
@@ -59,15 +61,15 @@ const NotificationFeed = ({ isDarkMode, currentUserId }) => {
               </div>
               <div>
                 <p className={`text-sm font-bold ${isDarkMode ? "text-white" : "text-slate-900"}`}>
-                   {item.userId || 'System'}
+                   {'System'}
                 </p>
-                <p className={`text-xs italic opacity-60`}>"{item.message || item.msg}"</p>
+                <p className={`text-xs italic opacity-60`}>"{item.message}"</p>
               </div>
             </div>
             <div className="flex items-center justify-between md:justify-end gap-8">
               <div className="text-right hidden sm:block">
                 <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest">Channel</p>
-                <p className="text-xs font-bold uppercase">{item.channel || item.chan}</p>
+                <p className="text-xs font-bold uppercase">{item.channel}</p>
               </div>
               <div className="flex items-center gap-3">
                  <StatusBadge status={item.status} />

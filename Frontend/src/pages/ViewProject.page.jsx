@@ -5,6 +5,7 @@ import AnalyticsChart from "../components/Chart";
 import NotificationFeed from "../components/Notifcation";
 import { useNavigate, useParams } from "react-router-dom";
 import Loader from "../components/Loader"; // Import your custom Loader
+import { useSelector } from "react-redux";
 
 const ViewProjectPage = () => {
   const { isDarkMode } = useTheme();
@@ -12,6 +13,7 @@ const ViewProjectPage = () => {
   const { projectId } = useParams();
   const [stats, setStats] = useState({ totalSent: "0", successRate: "0%" });
   const [loading, setLoading] = useState(true);
+  let user = useSelector((state) => state.user.userData);
   
   // // State to control the display of your custom Loader
   const [isNavigating, setIsNavigating] = useState(false);
@@ -122,7 +124,7 @@ const ViewProjectPage = () => {
 
         {/* Real-time Activity Feed */}
         <div className="mb-10">
-          <NotificationFeed isDarkMode={isDarkMode} />
+          <NotificationFeed isDarkMode={isDarkMode} currentUserId={user?._id} />
         </div>
       </div>
     </div>
