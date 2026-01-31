@@ -19,7 +19,7 @@ export const createNotification = async (req, res) => {
     }
 
     for (const channel of channels) {
-      const userPreference = await UserPreference.findOne({ userId });
+      const userPreference = await UserPreference.findOne({ appId });
 
       if (userPreference && !userPreference.preferences[channel]) {
         return res.status(400).json({

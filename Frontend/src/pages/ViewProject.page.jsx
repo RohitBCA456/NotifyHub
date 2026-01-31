@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useTheme } from "../context/ThemeContext";
-import { Zap, Activity, CheckCircle2, Clock } from "lucide-react";
+import { Zap, Activity, CheckCircle2 } from "lucide-react";
 import AnalyticsChart from "../components/Chart";
 import NotificationFeed from "../components/Notifcation";
 import { useNavigate, useParams } from "react-router-dom";
-import Loader from "../components/Loader"; // Import your custom Loader
+import Loader from "../components/Loader"; 
 import { useSelector } from "react-redux";
 
 const ViewProjectPage = () => {
@@ -13,38 +13,46 @@ const ViewProjectPage = () => {
   const { projectId } = useParams();
   const [stats, setStats] = useState({ totalSent: "0", successRate: "0%" });
   const [loading, setLoading] = useState(true);
-  let user = useSelector((state) => state.user.userData);
-  
-  // // State to control the display of your custom Loader
   const [isNavigating, setIsNavigating] = useState(false);
+  let user = useSelector((state) => state.user.userData);
 
-  // Function to handle the transition
-  const handleUpdatePreference = () => {
-    setIsNavigating(true); // Show loader
-
-    // Wait for 1 second (or your preferred time) before navigating
-    setTimeout(() => {
-      navigate(`/updatePreference/${projectId}`);
-    }, 1000); 
-  };
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await fetch(`http://localhost:3000/api/analytics/project-stats/${projectId}`);
-        const data = await response.json();
-        setStats(data);
-      } catch (err) {
-        console.error("Stats fetch error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
+  // 1. Memoized fetch function for Stats
+  const fetchStats = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:3000/api/analytics/project-stats/${projectId}`
+      );
+      if (!response.ok) throw new Error("Stats fetch failed");
+      const data = await response.json();
+      setStats(data);
+    } catch (err) {
+      console.error("Stats fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
   }, [projectId]);
 
-  // If navigating, return only the Loader component
+  // 2. Polling Effect for Stats (Every 5 seconds)
+  useEffect(() => {
+    // Initial fetch
+    fetchStats();
+
+    // Set up the interval
+    const interval = setInterval(() => {
+      fetchStats();
+    }, 5000);
+
+    // CLEANUP: Essential to clear the timer when navigating away
+    return () => clearInterval(interval);
+  }, [fetchStats]);
+
+  const handleUpdatePreference = () => {
+    setIsNavigating(true);
+    setTimeout(() => {
+      navigate(`/updatePreference/${projectId}`);
+    }, 1000);
+  };
+
   if (isNavigating) {
     return (
       <Loader 
@@ -87,12 +95,11 @@ const ViewProjectPage = () => {
                 Active
               </div>
             </div>
-            <p className={`text-sm opacity-60`}>
+            <p className="text-sm opacity-60">
               Real-time monitoring for your webhook infrastructure.
             </p>
           </div>
           
-          {/* Updated Button to call the transition function */}
           <button
             onClick={handleUpdatePreference}
             className="flex items-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl shadow-xl shadow-blue-500/25 transition-all active:scale-95"
@@ -102,7 +109,7 @@ const ViewProjectPage = () => {
         </div>
 
         {/* Top Stats Cards */}
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
           <StatCard
             icon={<Activity />}
             label="Total Notifications"
