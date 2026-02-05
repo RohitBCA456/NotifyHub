@@ -2,10 +2,13 @@ import { sendEmail } from "../workers/email.work.js";
 import { Notification } from "../models/notification.model.js";
 import { publishToQueue } from "../config/rabbitmq.js";
 import { UserPreference } from "../models/userPreference.model.js";
-import { emitUser } from "../config/socket.js";
+import { emitStats, emitUser } from "../config/socket.js";
 import { App } from "../models/app.model.js";
 import { sendSMS } from "../workers/sms.worker.js";
 import { emitInApp } from "../workers/inapp.worker.js";
+import { getChartData } from "./analytics.controller.js";
+import { getNotificationStats } from "../services/stats.service.js";
+import { getProjectStat } from "../services/projectStats.service.js";
 
 export const createNotification = async (req, res) => {
   try {
@@ -57,7 +60,7 @@ export const sendNotification = async (notification) => {
 
     if (channel === "email") {
       await sendEmail(to, subject, message);
-      
+
       emitUser(userId, "notification_sent", {
         notificationId: _id,
         userId: userId,
@@ -84,6 +87,16 @@ export const sendNotification = async (notification) => {
         timestamp: Date.now(),
       });
     }
+
+    const stats = await getNotificationStats(appId);
+    const projectStats = await getProjectStat(appId);
+
+    console.log("Emitting stats for appId:", appId, stats, projectStats);
+
+    emitStats(appId, "stats_updated", {
+      notificationStats: stats[0] || {},
+      projectStats: projectStats[0] || {},
+    });
   } catch (error) {
     await Notification.findByIdAndUpdate(notification._id, {
       status: "failed",

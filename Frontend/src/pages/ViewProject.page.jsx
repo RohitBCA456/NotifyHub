@@ -4,8 +4,11 @@ import { Zap, Activity, CheckCircle2 } from "lucide-react";
 import AnalyticsChart from "../components/Chart";
 import NotificationFeed from "../components/Notifcation";
 import { useNavigate, useParams } from "react-router-dom";
-import Loader from "../components/Loader"; 
+import Loader from "../components/Loader";
 import { useSelector } from "react-redux";
+import { io } from "socket.io-client";
+
+const socket = io("http://localhost:3000/ui", { autoConnect: false });
 
 const ViewProjectPage = () => {
   const { isDarkMode } = useTheme();
@@ -16,14 +19,17 @@ const ViewProjectPage = () => {
   const [isNavigating, setIsNavigating] = useState(false);
   let user = useSelector((state) => state.user.userData);
 
-  // 1. Memoized fetch function for Stats
-  const fetchStats = useCallback(async () => {
+  // 1. Initial Fetch (Runs only once on load or projectId change)
+  const fetchInitialStats = useCallback(async () => {
     try {
+      setLoading(true);
       const response = await fetch(
         `http://localhost:3000/api/analytics/project-stats/${projectId}`
       );
       if (!response.ok) throw new Error("Stats fetch failed");
       const data = await response.json();
+      
+      // Assuming your REST API returns the flat object { totalSent, successRate }
       setStats(data);
     } catch (err) {
       console.error("Stats fetch error:", err);
@@ -32,19 +38,38 @@ const ViewProjectPage = () => {
     }
   }, [projectId]);
 
-  // 2. Polling Effect for Stats (Every 5 seconds)
+  // 2. Socket Connection & Real-time Listeners
   useEffect(() => {
-    // Initial fetch
-    fetchStats();
+    // Connect and Join the room for this specific project
+    socket.connect();
+    socket.emit("join", projectId);
 
-    // Set up the interval
-    const interval = setInterval(() => {
-      fetchStats();
-    }, 5000);
+    // Initial load
+    fetchInitialStats();
 
-    // CLEANUP: Essential to clear the timer when navigating away
-    return () => clearInterval(interval);
-  }, [fetchStats]);
+    // Listen for real-time updates
+    socket.on("stats_updated", (newData) => {
+      console.log("Real-time update received:", newData);
+      
+      // Accessing the specific notification stats from the nested object
+      if (newData.projectStats) {
+        const { total, successRate } = newData.projectStats;
+
+        console.log("Updating stats with:", { total, successRate });
+        
+        setStats({
+          totalSent: total.toString(),
+          successRate: `${successRate.toFixed(1)}%`
+        });
+      }
+    });
+
+    // CLEANUP: Unsubscribe from event and leave room
+    return () => {
+      socket.off("stats_updated");
+      // Optional: socket.emit("leave", projectId);
+    };
+  }, [projectId, fetchInitialStats]);
 
   const handleUpdatePreference = () => {
     setIsNavigating(true);
@@ -55,11 +80,11 @@ const ViewProjectPage = () => {
 
   if (isNavigating) {
     return (
-      <Loader 
-        title="Loading Preferences..." 
+      <Loader
+        title="Loading Preferences..."
         subtext="Fetching your notification settings"
-        isDarkMode={isDarkMode} 
-        fullScreen={true} 
+        isDarkMode={isDarkMode}
+        fullScreen={true}
       />
     );
   }
@@ -99,7 +124,7 @@ const ViewProjectPage = () => {
               Real-time monitoring for your webhook infrastructure.
             </p>
           </div>
-          
+
           <button
             onClick={handleUpdatePreference}
             className="flex items-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl shadow-xl shadow-blue-500/25 transition-all active:scale-95"
@@ -126,7 +151,7 @@ const ViewProjectPage = () => {
 
         {/* Graphs and Charts */}
         <div className="mb-10">
-          <AnalyticsChart isDarkMode={isDarkMode} />
+          <AnalyticsChart isDarkMode={isDarkMode} currentUserId={user?._id} />
         </div>
 
         {/* Real-time Activity Feed */}

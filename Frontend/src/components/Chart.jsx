@@ -1,80 +1,100 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { BarChart3, PieChart as PieChartIcon, Loader2 } from "lucide-react";
 import { useParams } from "react-router-dom";
+import { io } from "socket.io-client";
 
-const AnalyticsChart = ({ isDarkMode }) => {
+// Move socket outside or use a ref to prevent multiple connections on re-render
+const socket = io("http://localhost:3000/ui", { autoConnect: false });
+
+const AnalyticsChart = ({ isDarkMode, currentUserId }) => {
   const { projectId } = useParams();
   const [hoveredData, setHoveredData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [chartData, setChartData] = useState({ volume: [], channels: [] });
 
-  // 1. Wrap fetch in useCallback to prevent infinite re-render loops
-  const fetchCharts = useCallback(async () => {
+  // Helper to transform raw DB stats into UI-ready data
+  const transformData = useCallback((rawData) => {
+    if (!rawData) return;
+
+    // Transform Hourly Volume
+    const maxVal = Math.max(...rawData.hourlyVolume.map((h) => h.count), 1);
+    const normalizedVolume = rawData.hourlyVolume.map(
+      (h) => (h.count / maxVal) * 100,
+    );
+
+    // Transform Channel Mix
+    const total = rawData.channelMix.reduce((acc, curr) => acc + curr.count, 0);
+    let currentOffset = 0;
+    const colors = { email: "#3b82f6", inapp: "#6366f1", sms: "#ec4899" };
+    const bgColors = {
+      email: "bg-blue-500",
+      inapp: "bg-indigo-500",
+      sms: "bg-pink-500",
+    };
+
+    const transformedChannels = rawData.channelMix.map((ch) => {
+      const percentage = total > 0 ? Math.round((ch.count / total) * 100) : 0;
+      const strokeDash = `${percentage} 100`;
+      const offset = currentOffset;
+      currentOffset -= percentage;
+
+      return {
+        label: ch._id.charAt(0).toUpperCase() + ch._id.slice(1),
+        value: percentage,
+        count: ch.count,
+        strokeDash,
+        offset: offset.toString(),
+        color: colors[ch._id.toLowerCase()] || "#94a3b8",
+        bg: bgColors[ch._id.toLowerCase()] || "bg-slate-400",
+      };
+    });
+
+    setChartData({
+      volume: normalizedVolume,
+      channels: transformedChannels,
+    });
+  }, []);
+
+  // 1. Initial Fetch (On Page Load/Refresh)
+  const fetchInitialData = useCallback(async () => {
     try {
       const res = await fetch(
-        `http://localhost:3000/api/analytics/chart-data/${projectId}`
+        `http://localhost:3000/api/analytics/chart-data/${projectId}`,
       );
       if (!res.ok) throw new Error("Fetch failed");
       const data = await res.json();
-
-      // Transform Hourly Volume (normalize to 0-100 for CSS height)
-      const maxVal = Math.max(...data.hourlyVolume.map((h) => h.count), 1);
-      const normalizedVolume = data.hourlyVolume.map(
-        (h) => (h.count / maxVal) * 100
-      );
-
-      // Transform Channel Mix (calculate percentages and SVG offsets)
-      const total = data.channelMix.reduce((acc, curr) => acc + curr.count, 0);
-      let currentOffset = 0;
-
-      const colors = { email: "#3b82f6", inapp: "#6366f1", sms: "#ec4899" };
-      const bgColors = {
-        email: "bg-blue-500",
-        inapp: "bg-indigo-500",
-        sms: "bg-pink-500",
-      };
-
-      const transformedChannels = data.channelMix.map((ch) => {
-        const percentage = total > 0 ? Math.round((ch.count / total) * 100) : 0;
-        const strokeDash = `${percentage} 100`;
-        const offset = currentOffset;
-        currentOffset -= percentage;
-
-        return {
-          label: ch._id.charAt(0).toUpperCase() + ch._id.slice(1),
-          value: percentage,
-          count: ch.count,
-          strokeDash,
-          offset: offset.toString(),
-          color: colors[ch._id.toLowerCase()] || "#94a3b8",
-          bg: bgColors[ch._id.toLowerCase()] || "bg-slate-400",
-        };
-      });
-
-      setChartData({
-        volume: normalizedVolume,
-        channels: transformedChannels,
-      });
+      transformData(data);
     } catch (err) {
-      console.error("Chart fetch failed", err);
+      console.error("Initial load failed", err);
     } finally {
       setIsLoading(false);
     }
-  }, [projectId]);
+  }, [projectId, transformData]);
 
-  // 2. Real-time polling effect
+  // 2. Socket Connection & Real-time Listeners
   useEffect(() => {
-    // Initial fetch on mount
-    fetchCharts();
+    socket.connect();
+    socket.emit("join", projectId);
 
-    // Set interval to fetch every 2.5 seconds
-    const interval = setInterval(() => {
-      fetchCharts();
-    }, 5000);
+    // Initial load
+    fetchInitialData();
 
-    // CLEANUP: Stop the timer when the component unmounts
-    return () => clearInterval(interval);
-  }, [fetchCharts]);
+    // Listen for real-time updates (No more polling!)
+    socket.on("stats_updated", (newData) => {
+      // Access specifically the notification stats data
+      const notificationData = newData.notificationStats;
+
+      console.log("Notification Stats only:", notificationData);
+
+      // Pass only the notification data to your transform function
+      transformData(notificationData);
+    });
+
+    return () => {
+      socket.off("stats_updated");
+      socket.disconnect();
+    };
+  }, [currentUserId, fetchInitialData, transformData]);
 
   if (isLoading) {
     return (
