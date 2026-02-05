@@ -20,7 +20,7 @@ async function connect() {
 
     console.log("Connected to RabbitMQ");
 
-    await clearQueue(MAIN_QUEUE);
+    // await clearQueue(MAIN_QUEUE);
 
     await channel.assertQueue(MAIN_QUEUE, { durable: true });
 
@@ -104,20 +104,20 @@ async function publishToQueue(queueName, message) {
   });
 }
 
-async function clearQueue(queueName) {
-  try {
-    if (!channel) {
-      console.error("Cannot clear queue: Channel not established.");
-      return;
-    }
+// async function clearQueue(queueName) {
+//   try {
+//     if (!channel) {
+//       console.error("Cannot clear queue: Channel not established.");
+//       return;
+//     }
 
-    const result = await channel.purgeQueue(queueName);
-    console.log(`Queue "${queueName}" cleared. Messages removed: ${result.messageCount}`);
-    return result;
-  } catch (error) {
-    console.error(`Failed to clear queue "${queueName}":`, error.message);
-    throw error;
-  }
-}
+//     const result = await channel.purgeQueue(queueName);
+//     console.log(`Queue "${queueName}" cleared. Messages removed: ${result.messageCount}`);
+//     return result;
+//   } catch (error) {
+//     console.error(`Failed to clear queue "${queueName}":`, error.message);
+//     throw error;
+//   }
+// }
 
-export { connect, publishToQueue, clearQueue };
+export { connect, publishToQueue };

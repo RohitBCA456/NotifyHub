@@ -13,6 +13,8 @@ dotenv.config({ path: "./.env" });
 
 const app = express();
 
+app.set('trust proxy', 1);
+
 const server = http.createServer(app);
 
 initSocket(server);
@@ -22,7 +24,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-await connect();
+connect();
 
 app.use(
   cors({

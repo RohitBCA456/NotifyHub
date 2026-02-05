@@ -7,13 +7,18 @@ import {
 } from "../controllers/user.controller.js";
 import { verifyAuthentication } from "../middleware/auth.middleware.js";
 import { createApp } from "../controllers/user.controller.js";
+import { generalLimiter, strictLimiter } from "../utils/rateLimiter.js";
 
 const router = Router();
 
-router.route("/save-credentials").post(saveCredentials);
+router.route("/save-credentials").post(strictLimiter, saveCredentials);
 router.route("/logout").get(verifyAuthentication, logoutUser);
-router.route("/create-app").post(verifyAuthentication, createApp);
-router.route("/fetch-projects").get(verifyAuthentication, fetchProjects);
+router
+  .route("/create-app")
+  .post(verifyAuthentication, generalLimiter, createApp);
+router
+  .route("/fetch-projects")
+  .get(verifyAuthentication, generalLimiter, fetchProjects);
 router.route("/delete-project").delete(verifyAuthentication, deleteProject);
 
 export { router as userRoutes };
