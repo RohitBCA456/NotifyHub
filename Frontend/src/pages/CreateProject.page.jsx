@@ -6,6 +6,8 @@ import {
   MessageSquare,
   ArrowRight,
   Check,
+  Moon,
+  Clock,
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { useNavigate } from "react-router-dom";
@@ -26,16 +28,26 @@ const CreateProjectPage = () => {
     inApp: false,
     sms: false,
   });
+
+  const [quietHours, setQuietHours] = useState({
+    enabled: false,
+    start: "22:00",
+    end: "08:00",
+  });
+
   const [generatedKey, setGeneratedKey] = useState("");
 
   const handleToggle = (key) => {
     setPreferences((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const handleQuietHoursToggle = () => {
+    setQuietHours((prev) => ({ ...prev, enabled: !prev.enabled }));
+  };
+
   const handleCreate = async () => {
     if (!projectName) return toast.error("Please enter a project name");
 
-    // Convert {email: true, inApp: true} -> ["email", "inapp"]
     const selectedChannels = Object.keys(preferences).filter(
       (key) => preferences[key]
     );
@@ -47,25 +59,24 @@ const CreateProjectPage = () => {
     try {
       setStep(2);
 
+      // 3. Updated Payload to include quietHours
       const response = await axios.post(
         "http://localhost:3000/api/users/create-app",
         {
           name: projectName,
           channel: selectedChannels.map((c) => c.toLowerCase()),
+          quietHours: quietHours, // Sending the object: {enabled, start, end}
         },
-        {
-          withCredentials: true,
-        }
+        { withCredentials: true }
       );
 
       toast.success("Project created successfully.");
-
       setGeneratedKey(response.data.app.apiKey);
       setStep(3);
     } catch (error) {
       setStep(1);
       const errorMsg = error.response?.data?.message || "Something went wrong";
-      alert(errorMsg);
+      toast.error(errorMsg);
     }
   };
 
@@ -160,6 +171,59 @@ const CreateProjectPage = () => {
                   isDarkMode={isDarkMode}
                 />
               </div>
+            </div>
+
+            <div className={`p-8 rounded-3xl border transition-colors ${
+                isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200 shadow-sm"
+              }`}>
+              <div className="flex items-center justify-between mb-6">
+                <label className="text-xs font-bold uppercase tracking-widest text-blue-500 block">
+                  Step 3: Quiet Hours (Optional)
+                </label>
+                <button
+                  onClick={handleQuietHoursToggle}
+                  className={`w-12 h-6 rounded-full relative transition-all ${quietHours.enabled ? "bg-blue-600" : "bg-slate-700"}`}
+                >
+                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${quietHours.enabled ? "left-7" : "left-1"}`} />
+                </button>
+              </div>
+
+              <div className={`flex items-center gap-4 mb-6 ${!quietHours.enabled && "opacity-40"}`}>
+                <div className="p-3 rounded-xl bg-purple-500/10 text-purple-500">
+                  <Moon size={22} />
+                </div>
+                <div>
+                  <p className={`font-bold ${isDarkMode ? "text-white" : "text-slate-900"}`}>Do Not Disturb</p>
+                  <p className="text-sm opacity-60">Mute notifications during a specific window</p>
+                </div>
+              </div>
+
+              {quietHours.enabled && (
+                <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-300">
+                  <div className={`flex flex-col gap-1 p-3 rounded-2xl border ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+                    <label className="text-[10px] font-bold uppercase opacity-50 flex items-center gap-1">
+                      <Clock size={10} /> Start
+                    </label>
+                    <input
+                      type="time"
+                      value={quietHours.start}
+                      onChange={(e) => setQuietHours(prev => ({...prev, start: e.target.value}))}
+                      className="bg-transparent font-bold outline-none"
+                    />
+                  </div>
+                  <div className={`flex flex-col gap-1 p-3 rounded-2xl border ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+                    <label className="text-[10px] font-bold uppercase opacity-50 flex items-center gap-1">
+                      <Clock size={10} /> End
+                    </label>
+                    <input
+                      type="time"
+                      value={quietHours.end}
+                      onChange={(e) => setQuietHours(prev => ({...prev, end: e.target.value}))}
+                      className="bg-transparent font-bold outline-none"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <button

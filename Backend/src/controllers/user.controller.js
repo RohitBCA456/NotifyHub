@@ -73,10 +73,10 @@ export const logoutUser = async (req, res) => {
 
 export const createApp = async (req, res) => {
   try {
-    const { name, channel } = req.body;
+    const { name, channel, quietHours } = req.body; 
     const userId = req.userId;
 
-    if (name.trim() === "") {
+    if (!name || name.trim() === "") {
       return res.status(400).json({ message: "App name is required." });
     }
 
@@ -89,22 +89,32 @@ export const createApp = async (req, res) => {
       apiKey: generateApiKey(),
     });
 
+    const defaultQuietHours = {
+      enabled: false,
+      start: "22:00",
+      end: "08:00",
+    };
+
     await UserPreference.findOneAndUpdate(
       { appId: newApp._id },
       {
         $set: {
-          "preferences.email": channel.includes("email"),
-          "preferences.sms": channel.includes("sms"),
-          "preferences.inapp": channel.includes("inapp"),
+          preferences: {
+            email: activeChannels.includes("email"),
+            sms: activeChannels.includes("sms"),
+            inapp: activeChannels.includes("in-app") || activeChannels.includes("inapp"),
+          },
+          quietHours: quietHours || defaultQuietHours, 
         },
       },
-      { upsert: true },
+      { upsert: true, new: true }
     );
 
     return res
       .status(201)
       .json({ message: "App created successfully.", app: newApp });
   } catch (error) {
+    console.error("Create App Error:", error);
     return res
       .status(500)
       .json({ message: "Internal server error.", error: error.message });

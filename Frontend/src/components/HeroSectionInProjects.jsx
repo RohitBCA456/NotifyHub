@@ -78,7 +78,7 @@ const HeroSectionProjects = () => {
       console.log("Full Backend Response:", response.data);
       return response.data.apps;
     },
-    refetchInterval: 1000,
+    refetchInterval: 2000,
   });
 
   const handleDeletion = async (projectId) => {
@@ -87,8 +87,10 @@ const HeroSectionProjects = () => {
     try {
       const response = await axios.delete(
         "http://localhost:3000/api/users/delete-project",
-        { projectId },
-        { withCredentials: true },
+        {
+          data: { projectId },
+          withCredentials: true,
+        },
       );
 
       toast.success("Project Deleted successfully.");

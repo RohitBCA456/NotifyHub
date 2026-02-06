@@ -113,15 +113,22 @@ export const updateNotificationPreference = async (req, res) => {
       return res.status(400).json({ message: "Fields are missing." });
     }
 
+    const { quietHours, ...channelPrefs } = preferences;
+
     await UserPreference.findOneAndUpdate(
       { appId },
-      { $set: { preferences } },
-      { upsert: true, new: true },
+      { 
+        $set: { 
+          preferences: channelPrefs, 
+          quietHours: quietHours     
+        } 
+      },
+      { upsert: true, new: true }
     );
 
     return res.status(200).json({ message: "Updated Preference successfully" });
   } catch (error) {
-    console.log(error);
+    console.error("Update Error:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };

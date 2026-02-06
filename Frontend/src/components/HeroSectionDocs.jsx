@@ -1,13 +1,14 @@
 import React from "react";
 import { Copy, Terminal, Key, Rocket, Code2, CheckCircle2 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
+import toast from "react-hot-toast";
 
 const HeroSectionDocs = () => {
   const { isDarkMode } = useTheme();
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    alert("Copied to clipboard!");
+    toast.success("Copied to clipboard!");
   };
 
   const codeSnippet = `curl -X POST https://api.notifyhub.io/v1/send \\

@@ -1,10 +1,17 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Mail, MessageSquare, Layout, Bell, Save } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import {
+  Mail,
+  MessageSquare,
+  Layout,
+  Bell,
+  Save,
+  Moon,
+  Clock,
+} from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useParams } from "react-router-dom";
-import Loader from "../components/Loader";
 import toast from "react-hot-toast";
 
 const NotificationPreferencePage = () => {
@@ -16,6 +23,11 @@ const NotificationPreferencePage = () => {
     email: false,
     sms: false,
     inapp: false,
+    quietHours: {
+      enabled: false,
+      start: "22:00",
+      end: "08:00",
+    },
   });
 
   // 1. Fetch existing preferences
@@ -24,28 +36,41 @@ const NotificationPreferencePage = () => {
     queryFn: async () => {
       const res = await axios.get(
         `http://localhost:3000/api/notifications/get-preferences/${appId}`,
-        { withCredentials: true }
+        { withCredentials: true },
       );
       return res.data;
     },
     enabled: !!appId,
   });
 
-  // Sync state when data arrives
   useEffect(() => {
-    if (serverData?.preferences) {
-      setPrefs(serverData.preferences);
+    if (serverData) {
+      setPrefs({
+        ...serverData.preferences,
+        quietHours: serverData.quietHours || {
+          enabled: false,
+          start: "22:00",
+          end: "08:00",
+        },
+      });
     }
   }, [serverData]);
 
   // 2. Change Detection Logic
   const hasChanges = useMemo(() => {
-    if (!serverData?.preferences) return false;
-    
+    // Check if serverData exists at all
+    if (!serverData) return false;
+
+    const sPrefs = serverData.preferences;
+    const sQuiet = serverData.quietHours;
+
     return (
-      prefs.email !== serverData.preferences.email ||
-      prefs.sms !== serverData.preferences.sms ||
-      prefs.inapp !== serverData.preferences.inapp
+      prefs.email !== sPrefs?.email ||
+      prefs.sms !== sPrefs?.sms ||
+      prefs.inapp !== sPrefs?.inapp ||
+      prefs.quietHours.enabled !== sQuiet?.enabled ||
+      prefs.quietHours.start !== sQuiet?.start ||
+      prefs.quietHours.end !== sQuiet?.end
     );
   }, [prefs, serverData]);
 
@@ -55,7 +80,7 @@ const NotificationPreferencePage = () => {
       return await axios.post(
         "http://localhost:3000/api/notifications/update-preferences",
         { appId, preferences: newPrefs },
-        { withCredentials: true }
+        { withCredentials: true },
       );
     },
     onSuccess: () => {
@@ -64,27 +89,40 @@ const NotificationPreferencePage = () => {
     },
     onError: () => {
       toast.error("Failed to save settings.");
-    }
+    },
   });
 
   const togglePref = (key) =>
     setPrefs((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  const updateQuietHours = (key, value) => {
+    setPrefs((prev) => ({
+      ...prev,
+      quietHours: { ...prev.quietHours, [key]: value },
+    }));
+  };
 
   const handleSave = () => {
     mutation.mutate(prefs);
   };
 
   return (
-    <div className={`pt-24 pb-20 min-h-screen transition-colors duration-300 ${
-        isDarkMode ? "bg-slate-950 text-slate-300" : "bg-slate-50 text-slate-600"
-    }`}>
+    <div
+      className={`pt-24 pb-20 min-h-screen transition-colors duration-300 ${
+        isDarkMode
+          ? "bg-slate-950 text-slate-300"
+          : "bg-slate-50 text-slate-600"
+      }`}
+    >
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-12">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-3 bg-indigo-600 rounded-2xl text-white shadow-lg shadow-indigo-500/20">
               <Bell size={24} />
             </div>
-            <h1 className={`text-4xl font-black tracking-tight ${isDarkMode ? "text-white" : "text-slate-900"}`}>
+            <h1
+              className={`text-4xl font-black tracking-tight ${isDarkMode ? "text-white" : "text-slate-900"}`}
+            >
               Delivery Channels
             </h1>
           </div>
@@ -94,7 +132,7 @@ const NotificationPreferencePage = () => {
         </div>
 
         <div className="grid grid-cols-1 gap-6">
-          <PreferenceCard 
+          <PreferenceCard
             icon={<Mail size={24} />}
             title="Email Notifications"
             active={prefs.email}
@@ -104,7 +142,7 @@ const NotificationPreferencePage = () => {
             bgClass="bg-blue-500/10"
           />
 
-          <PreferenceCard 
+          <PreferenceCard
             icon={<MessageSquare size={24} />}
             title="SMS Messages"
             active={prefs.sms}
@@ -114,7 +152,7 @@ const NotificationPreferencePage = () => {
             bgClass="bg-emerald-500/10"
           />
 
-          <PreferenceCard 
+          <PreferenceCard
             icon={<Layout size={24} />}
             title="Dashboard Alerts"
             active={prefs.inapp}
@@ -124,6 +162,71 @@ const NotificationPreferencePage = () => {
             bgClass="bg-amber-500/10"
           />
 
+          <div
+            className={`mt-6 p-8 rounded-[32px] border transition-all ${
+              isDarkMode
+                ? "bg-slate-900 border-slate-800"
+                : "bg-white border-slate-200 shadow-sm"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-2xl bg-purple-500/10 text-purple-500">
+                  <Moon size={24} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-xl">Quiet Hours</h3>
+                  <p className="text-sm opacity-60">
+                    Mute all delivery channels during specific times
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() =>
+                  updateQuietHours("enabled", !prefs.quietHours.enabled)
+                }
+                className={`w-14 h-7 rounded-full relative transition-all duration-300 ${prefs.quietHours.enabled ? "bg-purple-600" : "bg-slate-700"}`}
+              >
+                <div
+                  className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all duration-300 ${prefs.quietHours.enabled ? "left-8" : "left-1"}`}
+                />
+              </button>
+            </div>
+
+            {/* Time Selectors - Only visible if enabled */}
+            <div
+              className={`grid grid-cols-1 sm:grid-cols-2 gap-4 transition-all duration-500 ${prefs.quietHours.enabled ? "opacity-100 max-h-40" : "opacity-30 pointer-events-none max-h-40"}`}
+            >
+              <div
+                className={`flex flex-col gap-2 p-4 rounded-2xl border ${isDarkMode ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-200"}`}
+              >
+                <label className="text-xs font-bold uppercase tracking-wider opacity-50 flex items-center gap-2">
+                  <Clock size={12} /> Start Time
+                </label>
+                <input
+                  type="time"
+                  value={prefs.quietHours.start}
+                  onChange={(e) => updateQuietHours("start", e.target.value)}
+                  className="bg-transparent text-xl font-semibold focus:outline-none"
+                />
+              </div>
+
+              <div
+                className={`flex flex-col gap-2 p-4 rounded-2xl border ${isDarkMode ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-200"}`}
+              >
+                <label className="text-xs font-bold uppercase tracking-wider opacity-50 flex items-center gap-2">
+                  <Clock size={12} /> End Time
+                </label>
+                <input
+                  type="time"
+                  value={prefs.quietHours.end}
+                  onChange={(e) => updateQuietHours("end", e.target.value)}
+                  className="bg-transparent text-xl font-semibold focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="flex justify-end gap-4 mt-12 pt-8 border-t border-slate-800">
             <button
               onClick={handleSave}
@@ -131,8 +234,8 @@ const NotificationPreferencePage = () => {
               disabled={!hasChanges || mutation.isPending}
               className={`px-8 py-3 font-bold rounded-2xl flex items-center gap-2 transition-all active:scale-95 ${
                 !hasChanges || mutation.isPending
-                ? "bg-slate-800 text-slate-500 cursor-not-allowed opacity-50 shadow-none" 
-                : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-xl shadow-indigo-500/20"
+                  ? "bg-slate-800 text-slate-500 cursor-not-allowed opacity-50 shadow-none"
+                  : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-xl shadow-indigo-500/20"
               }`}
             >
               <Save size={18} />
@@ -145,20 +248,36 @@ const NotificationPreferencePage = () => {
   );
 };
 
-const PreferenceCard = ({ icon, title, active, onClick, isDarkMode, colorClass, bgClass }) => (
-  <div className={`p-6 rounded-[32px] border transition-all ${
-    isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200 shadow-sm"
-  }`}>
+const PreferenceCard = ({
+  icon,
+  title,
+  active,
+  onClick,
+  isDarkMode,
+  colorClass,
+  bgClass,
+}) => (
+  <div
+    className={`p-6 rounded-[32px] border transition-all ${
+      isDarkMode
+        ? "bg-slate-900 border-slate-800"
+        : "bg-white border-slate-200 shadow-sm"
+    }`}
+  >
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-4">
         <div className={`p-3 rounded-2xl ${bgClass} ${colorClass}`}>{icon}</div>
-        <div><h3 className="font-bold">{title}</h3></div>
+        <div>
+          <h3 className="font-bold">{title}</h3>
+        </div>
       </div>
       <button
         onClick={onClick}
         className={`w-14 h-7 rounded-full relative transition-all duration-300 ${active ? "bg-indigo-600" : "bg-slate-700"}`}
       >
-        <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all duration-300 ${active ? "left-8" : "left-1"}`} />
+        <div
+          className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all duration-300 ${active ? "left-8" : "left-1"}`}
+        />
       </button>
     </div>
   </div>
