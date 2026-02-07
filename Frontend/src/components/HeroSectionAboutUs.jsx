@@ -11,7 +11,7 @@ const AboutUs = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ["globalStats"],
     queryFn: async () => {
-      const res = await axios.get("http://localhost:3000/api/analytics/stats", {
+      const res = await axios.get("https://notifyhub-backend-gral.onrender.com/api/analytics/stats", {
         withCredentials: true,
       });
       return res.data;

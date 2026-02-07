@@ -61,7 +61,7 @@ const CreateProjectPage = () => {
 
       // 3. Updated Payload to include quietHours
       const response = await axios.post(
-        "http://localhost:3000/api/users/create-app",
+        "https://notifyhub-backend-gral.onrender.com/api/users/create-app",
         {
           name: projectName,
           channel: selectedChannels.map((c) => c.toLowerCase()),

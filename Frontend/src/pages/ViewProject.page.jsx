@@ -8,7 +8,7 @@ import Loader from "../components/Loader";
 import { useSelector } from "react-redux";
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:3000/ui", { autoConnect: false });
+const socket = io("https://notifyhub-backend-gral.onrender.com/ui", { autoConnect: false });
 
 const ViewProjectPage = () => {
   const { isDarkMode } = useTheme();
@@ -24,7 +24,7 @@ const ViewProjectPage = () => {
     try {
       setLoading(true);
       const response = await fetch(
-        `http://localhost:3000/api/analytics/project-stats/${projectId}`
+        `https://notifyhub-backend-gral.onrender.com/api/analytics/project-stats/${projectId}`
       );
       if (!response.ok) throw new Error("Stats fetch failed");
       const data = await response.json();

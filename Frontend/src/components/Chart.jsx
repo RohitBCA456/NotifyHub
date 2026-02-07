@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 
 // Move socket outside or use a ref to prevent multiple connections on re-render
-const socket = io("http://localhost:3000/ui", { autoConnect: false });
+const socket = io("https://notifyhub-backend-gral.onrender.com/ui", { autoConnect: false });
 
 const AnalyticsChart = ({ isDarkMode, currentUserId }) => {
   const { projectId } = useParams();
@@ -59,7 +59,7 @@ const AnalyticsChart = ({ isDarkMode, currentUserId }) => {
   const fetchInitialData = useCallback(async () => {
     try {
       const res = await fetch(
-        `http://localhost:3000/api/analytics/chart-data/${projectId}`,
+        `https://notifyhub-backend-gral.onrender.com/api/analytics/chart-data/${projectId}`,
       );
       if (!res.ok) throw new Error("Fetch failed");
       const data = await res.json();

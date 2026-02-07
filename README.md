@@ -82,7 +82,7 @@ TWILIO_AUTH_TOKEN=your_twilio_auth_token
 TWILIO_PHONE=your_twilio_phone
 EMAIL_USER=your_email
 EMAIL_PASS=your_email_password
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=https://notifyhub-backend-gral.onrender.com
 ```
 
 4. Start the server

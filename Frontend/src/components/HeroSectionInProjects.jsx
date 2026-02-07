@@ -70,7 +70,7 @@ const HeroSectionProjects = () => {
     queryKey: ["projects"],
     queryFn: async () => {
       const response = await axios.get(
-        "http://localhost:3000/api/users/fetch-projects",
+        "https://notifyhub-backend-gral.onrender.com/api/users/fetch-projects",
         {
           withCredentials: true,
         },
@@ -86,7 +86,7 @@ const HeroSectionProjects = () => {
 
     try {
       const response = await axios.delete(
-        "http://localhost:3000/api/users/delete-project",
+        "https://notifyhub-backend-gral.onrender.com/api/users/delete-project",
         {
           data: { projectId },
           withCredentials: true,
