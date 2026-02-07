@@ -51,7 +51,13 @@ export const logoutUser = async (req, res) => {
   try {
     const userId = req.userId;
 
-    await User.findByIdAndUpdate(userId, { webToken: null, sessionId: null });
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: { webToken: null, sessionId: null } },
+      { new: true },
+    );
+
+    console.log("Database updated successfully:", updatedUser ? "Yes" : "No");
 
     const options = {
       httpOnly: true,
@@ -73,7 +79,7 @@ export const logoutUser = async (req, res) => {
 
 export const createApp = async (req, res) => {
   try {
-    const { name, channel, quietHours } = req.body; 
+    const { name, channel, quietHours } = req.body;
     const userId = req.userId;
 
     if (!name || name.trim() === "") {
@@ -102,12 +108,14 @@ export const createApp = async (req, res) => {
           preferences: {
             email: activeChannels.includes("email"),
             sms: activeChannels.includes("sms"),
-            inapp: activeChannels.includes("in-app") || activeChannels.includes("inapp"),
+            inapp:
+              activeChannels.includes("in-app") ||
+              activeChannels.includes("inapp"),
           },
-          quietHours: quietHours || defaultQuietHours, 
+          quietHours: quietHours || defaultQuietHours,
         },
       },
-      { upsert: true, new: true }
+      { upsert: true, new: true },
     );
 
     return res
