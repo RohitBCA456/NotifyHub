@@ -85,12 +85,13 @@ async function subscribeToQueue() {
     } catch (error) {
       console.error("Error processing notification:", error.message);
 
-      if (error.code === "EAUTH") {
-        channel.ack(msg);
-        return;
-      }
+    if (error.code === "EAUTH" || error.name === "ValidationError") {
+    console.log("Permanent error detected. Removing from queue.");
+    channel.ack(msg);
+    return;
+  }
 
-      channel.nack(msg, false, true);
+      channel.nack(msg, false, false);
     }
   });
 }
