@@ -79,7 +79,7 @@ const Navbar = () => {
       setIsRedirecting(true);
       setIsProfileOpen(false);
 
-      await fetch("https://notifyhub-fh7h.onrender.com/api/users/logout", {
+      await fetch("https://notifyhub-backend-gral.onrender.com/api/users/logout", {
         method: "GET",
         credentials: "include",
       });
@@ -93,7 +93,7 @@ const Navbar = () => {
       setTimeout(() => {
         navigate("/");
       }, 2000);
-      
+
     } catch (error) {
       console.error("Logout failed:", error);
       toast.error("Logout encountered an issue.");
