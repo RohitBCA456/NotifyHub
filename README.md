@@ -234,11 +234,11 @@ This document outlines the planned enhancements for **NotifyHub** to improve per
 ## 1. Performance Optimization (Caching)
 **Goal:** Reduce database load and decrease dashboard latency.
 
-- [ ] **Redis Integration:** Implement Redis as a caching layer for frequently accessed data such as:
+- **Redis Integration:** Implement Redis as a caching layer for frequently accessed data such as:
     - User session data (webTokens).
     - Project analytics and notification stats.
     - User preferences (to avoid DB lookups on every notification trigger).
-- [ ] **Cache Invalidation Strategy:** Implement a TTL (Time-to-Live) and event-based invalidation logic to ensure data consistency between MongoDB and Redis.
+- **Cache Invalidation Strategy:** Implement a TTL (Time-to-Live) and event-based invalidation logic to ensure data consistency between MongoDB and Redis.
 
 
 
@@ -267,7 +267,7 @@ This document outlines the planned enhancements for **NotifyHub** to improve per
     - Setting up a new project.
     - Integrating the API key into a third-party app.
     - Real-time notification delivery via Socket.IO.
-- [ ] **Developer SDK:** Build a lieight NPM package (`notifyhub-node-sdk`) to simplify integration for Node.js developers.
+- **Developer SDK:** Build a lieight NPM package (`notifyhub-node-sdk`) to simplify integration for Node.js developers.
 
 ---
 
