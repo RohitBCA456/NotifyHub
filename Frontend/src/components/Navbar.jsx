@@ -71,27 +71,36 @@ const Navbar = () => {
   }, [location.pathname]);
 
   const handleLogout = async () => {
-    setLoaderConfig({
-      title: "Signing out...",
-      subtext: "Securing your session and redirecting",
-    });
-    setIsRedirecting(true);
-    setIsProfileOpen(false);
-    dispatch(clearUser());
-
     try {
-      // signOut() clears Clerk cookies and tokens
-      // redirectUrl: "/" will send them to your root route where
-      // your App.jsx/RootLayout SignedOut logic will trigger the login screen
-      await signOut(() => 
-        toast.success("Logout successfully."),
-        navigate("/"));
+      setLoaderConfig({
+        title: "Signing out...",
+        subtext: "Securing your session and redirecting",
+      });
+      setIsRedirecting(true);
+      setIsProfileOpen(false);
+
+      await fetch("https://notifyhub-fh7h.onrender.com/api/users/logout", {
+        method: "GET",
+        credentials: "include",
+      });
+
+      dispatch(clearUser());
+
+      await signOut();
+
+      toast.success("Logged out successfully.");
+
+      setTimeout(() => {
+        navigate("/");
+      }, 2000);
+      
     } catch (error) {
       console.error("Logout failed:", error);
+      toast.error("Logout encountered an issue.");
+    } finally {
       setIsRedirecting(false);
     }
   };
-
   const handleActionNavigation = (path, title, subtext) => {
     setLoaderConfig({ title, subtext });
     setIsRedirecting(true);
@@ -180,8 +189,8 @@ const Navbar = () => {
                             ? "text-white"
                             : "text-blue-600"
                           : isDarkMode
-                          ? "text-slate-400 hover:text-slate-200"
-                          : "text-slate-600 hover:text-blue-500"
+                            ? "text-slate-400 hover:text-slate-200"
+                            : "text-slate-600 hover:text-blue-500"
                       }`}
                     >
                       {/* ICON RENDERED HERE */}
@@ -252,7 +261,7 @@ const Navbar = () => {
                         handleActionNavigation(
                           "/profile",
                           "Accessing Profile...",
-                          "Loading your personal workspace"
+                          "Loading your personal workspace",
                         )
                       }
                       className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
@@ -268,7 +277,7 @@ const Navbar = () => {
                         handleActionNavigation(
                           "/settings",
                           "Opening Settings...",
-                          "Preparing your account configuration"
+                          "Preparing your account configuration",
                         )
                       }
                       className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
@@ -328,8 +337,8 @@ const Navbar = () => {
                     isActive
                       ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30"
                       : isDarkMode
-                      ? "text-slate-400 hover:bg-slate-800"
-                      : "text-slate-600 hover:bg-slate-100"
+                        ? "text-slate-400 hover:bg-slate-800"
+                        : "text-slate-600 hover:bg-slate-100"
                   }`}
                 >
                   {tab.icon}
