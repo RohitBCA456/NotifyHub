@@ -2,11 +2,10 @@ import { sendEmail } from "../workers/email.work.js";
 import { Notification } from "../models/notification.model.js";
 import { publishToQueue } from "../config/rabbitmq.js";
 import { UserPreference } from "../models/userPreference.model.js";
-import { emitStats, emitUser } from "../config/socket.js";
+import { emitStats } from "../config/socket.js";
 import { App } from "../models/app.model.js";
 import { sendSMS } from "../workers/sms.worker.js";
 import { emitInApp } from "../workers/inapp.worker.js";
-import { getChartData } from "./analytics.controller.js";
 import { getNotificationStats } from "../services/stats.service.js";
 import { getProjectStat } from "../services/projectStats.service.js";
 
@@ -59,28 +58,14 @@ export const sendNotification = async (notification) => {
     const { channel, to, subject, message, userId, _id, appId } = notification;
 
     if (channel === "email") {
-      await sendEmail(to, subject, message);
+      await sendEmail(to, subject, message, notification);
+    } 
 
-      emitUser(userId, "notification_sent", {
-        notificationId: _id,
-        userId: userId,
-        channel: channel,
-        status: "sent",
-        message: message,
-        createdAt: new Date(),
-      });
-    } else if (channel === "sms") {
-      await sendSMS(to, message);
+    else if (channel === "sms") {
+      await sendSMS(to, message, notification);
+    } 
 
-      emitUser(userId, "notification_sent", {
-        notificationId: _id,
-        userId: userId,
-        channel: channel,
-        status: "sent",
-        message: message,
-        createdAt: new Date(),
-      });
-    } else if (channel === "inapp") {
+    else if (channel === "inapp") {
       emitInApp(appId, userId, {
         notificationId: _id,
         message,
@@ -117,13 +102,13 @@ export const updateNotificationPreference = async (req, res) => {
 
     await UserPreference.findOneAndUpdate(
       { appId },
-      { 
-        $set: { 
-          preferences: channelPrefs, 
-          quietHours: quietHours     
-        } 
+      {
+        $set: {
+          preferences: channelPrefs,
+          quietHours: quietHours,
+        },
       },
-      { upsert: true, new: true }
+      { upsert: true, new: true },
     );
 
     return res.status(200).json({ message: "Updated Preference successfully" });

@@ -3,15 +3,20 @@
 
 NotifyHub is a real-time notification service designed for third-party applications. It allows apps to send notifications to their users via Email, SMS, and In-App (real-time) channels using a single unified backend. The system is built with scalability and extensibility in mind using event-driven architecture.
 
+## 🚀 Live Demo
+**[View Live App](https://notifyhub-fh7h.onrender.com)** *(Note: Initial load may take 50s due to Render's free tier spin-up)*
+
 ## Features
 
-- Multi-channel notifications (Email, SMS, In-App)
-- Real-time in-app notifications using Socket.IO
-- Third-party app integration using API keys
-- Background processing with RabbitMQ
-- User preference management (opt-in/out, quiet hours)
-- JWT-based authentication for dashboard access
-- Modular and scalable backend architecture
+- Multi-channel notifications: Support for Email (Resend), SMS (Twilio), and In-App (Socket.IO).
+
+- Event-Driven Architecture: High-performance background processing using RabbitMQ.
+
+- Dockerized Backend: Fully containerized backend service for consistent deployment and environment parity.
+
+- Real-time In-App Notifications: Instant delivery using Socket.IO namespaces.
+
+- Third-party Integration: Secure app integration via unique API Keys.
 
 ## Tech Stack
 
@@ -22,45 +27,103 @@ NotifyHub is a real-time notification service designed for third-party applicati
 - Socket.IO
 - JWT Authentication
 - Twilio (SMS)
-- Nodemailer (Email)
+- Resend (Email)
+- Docker
 
 ## Folder Structure
 
 ```
-Backend/
-├── middleware/
-│   ├── auth.middleware.js
-│   └── socket.middleware.js
-├── src/
-│   ├── config/
-│   │   ├── db.js
-│   │   ├── rabbitmq.js
-│   │   └── socket.js
-│   ├── controllers/
-│   │   ├── analytics.controller.js
-│   │   ├── notification.controller.js
-│   │   └── user.controller.js
-│   ├── models/
-│   │   ├── app.model.js
-│   │   ├── deliveryLogs.model.js
-│   │   ├── notification.model.js
-│   │   ├── user.model.js
-│   │   └── userPreference.model.js
-│   ├── routes/
-│   │   ├── analytics.routes.js
-│   │   ├── notification.routes.js
-│   │   └── user.routes.js
-│   ├── utils/
-│   │   ├── generateApiKey.js
-│   │   └── globalLogger.js
-│   └── workers/
-│       ├── email.worker.js
-│       ├── inapp.worker.js
-│       └── sms.worker.js
-├── app.js
-├── server.js
-├── package.json
-└── README.md
+├── Backend
+│   ├── sampleData
+│   │   └── notifications.json
+│   ├── src
+│   │   ├── config
+│   │   │   ├── db.js
+│   │   │   ├── rabbitmq.js
+│   │   │   └── socket.js
+│   │   ├── controllers
+│   │   │   ├── analytics.controller.js
+│   │   │   ├── notification.controller.js
+│   │   │   └── user.controller.js
+│   │   ├── middleware
+│   │   │   ├── auth.middleware.js
+│   │   │   └── socket.middleware.js
+│   │   ├── models
+│   │   │   ├── app.model.js
+│   │   │   ├── notification.model.js
+│   │   │   ├── user.model.js
+│   │   │   └── userPreference.model.js
+│   │   ├── routes
+│   │   │   ├── analytics.routes.js
+│   │   │   ├── notification.routes.js
+│   │   │   └── user.routes.js
+│   │   ├── services
+│   │   │   ├── projectStats.service.js
+│   │   │   └── stats.service.js
+│   │   ├── utils
+│   │   │   ├── generateApiKey.js
+│   │   │   ├── quiteHours.helper.js
+│   │   │   └── rateLimiter.js
+│   │   └── workers
+│   │       ├── email.work.js
+│   │       ├── inapp.worker.js
+│   │       └── sms.worker.js
+│   ├── .dockerignore
+│   ├── .gitignore
+│   ├── app.js
+│   ├── dockerfile
+│   ├── index.js
+│   ├── package-lock.json
+│   └── package.json
+├── Frontend
+│   ├── public
+│   │   └── vite.svg
+│   ├── src
+│   │   ├── Store
+│   │   │   ├── store.js
+│   │   │   └── userSlice.js
+│   │   ├── assets
+│   │   │   └── react.svg
+│   │   ├── components
+│   │   │   ├── ApiKeyDisplay.jsx
+│   │   │   ├── AppWrapper.jsx
+│   │   │   ├── Chart.jsx
+│   │   │   ├── Footer.jsx
+│   │   │   ├── HeroSectionAboutUs.jsx
+│   │   │   ├── HeroSectionDashboard.jsx
+│   │   │   ├── HeroSectionDocs.jsx
+│   │   │   ├── HeroSectionInProjects.jsx
+│   │   │   ├── Loader.jsx
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── Notifcation.jsx
+│   │   │   ├── RootLayout.jsx
+│   │   │   ├── ScrollTop.jsx
+│   │   │   ├── UserSync.jsx
+│   │   │   └── ViewApiKey.jsx
+│   │   ├── context
+│   │   │   └── ThemeContext.jsx
+│   │   ├── pages
+│   │   │   ├── CreateProject.page.jsx
+│   │   │   ├── NotificationPreference.page.jsx
+│   │   │   ├── Profile.page.jsx
+│   │   │   ├── Setting.page.jsx
+│   │   │   └── ViewProject.page.jsx
+│   │   ├── App.jsx
+│   │   ├── index.css
+│   │   └── main.jsx
+│   ├── .dockerignore
+│   ├── .gitignore
+│   ├── README.md
+│   ├── dockerfile
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── tailwind.config.js
+│   └── vite.config.js
+├── .dockerignore
+├── README.md
+└── docker-compose.yml
 ```
 
 ## Installation
@@ -80,9 +143,8 @@ RABBITMQ_URL=your_rabbitmq_url
 TWILIO_SID=your_twilio_sid
 TWILIO_AUTH_TOKEN=your_twilio_auth_token
 TWILIO_PHONE=your_twilio_phone
-EMAIL_USER=your_email
-EMAIL_PASS=your_email_password
-FRONTEND_URL=https://notifyhub-backend-gral.onrender.com
+RESEND_API_KEY=your_resend_api_key
+FRONTEND_URL=your_frontend_url
 ```
 
 4. Start the server
@@ -97,14 +159,20 @@ npm run dev
 - POST `/save-credentials`
 - GET `/logout`
 - POST `/create-app`
+- GET  `/fetch-projects`
+- DELETE  `/delete-project`
 
 ### Notification Routes
 
 - POST `/send-notification`
+- POST `/update-preferences`
+- GET  `/get-preferences/:appId`
 
 ### Analytics Routes
 
-- Coming soon
+- GET  `/stats`
+- GET  `/project-stats/:projectId`
+- GET  `/chart-data/:projectId`
 
 ## Models Overview
 
@@ -156,6 +224,60 @@ npm run dev
 2. Get generated API Key
 3. Use API Key to send notifications
 4. Connect to `/inapp` socket namespace for real-time notifications
+
+# Future Upgrades & Roadmap
+
+This document outlines the planned enhancements for **NotifyHub** to improve performance, reliability, and developer experience.
+
+---
+
+## 1. Performance Optimization (Caching)
+**Goal:** Reduce database load and decrease dashboard latency.
+
+- [ ] **Redis Integration:** Implement Redis as a caching layer for frequently accessed data such as:
+    - User session data (webTokens).
+    - Project analytics and notification stats.
+    - User preferences (to avoid DB lookups on every notification trigger).
+- [ ] **Cache Invalidation Strategy:** Implement a TTL (Time-to-Live) and event-based invalidation logic to ensure data consistency between MongoDB and Redis.
+
+
+
+---
+
+## 2. DevOps & Engineering Excellence
+**Goal:** Automate the release cycle and ensure system stability.
+
+- **CI/CD Pipeline:** Set up **GitHub Actions** to automate the build and deployment process:
+    - **Continuous Integration (CI):** Run automated tests on every Pull Request.
+    - **Continuous Deployment (CD):** Automatically deploy the Dockerized image to Render/AWS upon successful merge to `main`.
+- **Automated Testing:**
+    - **Unit Tests:** Test core logic like `quietHours.helper.js` and `generateApiKey.js` using **Jest**.
+    - **Integration Tests:** Test API endpoints and RabbitMQ message flow using **Supertest**.
+- **Docker Compose for Prod:** Refine the orchestration to include a health-check system for the RabbitMQ and Redis containers.
+
+
+
+---
+
+## 3. Documentation & Developer Experience
+**Goal:** Make it easier for third-party developers to adopt NotifyHub.
+
+- **Swagger/OpenAPI UI:** Integrate Swagger to provide interactive API documentation directly at `/api-docs`.
+- **Demo Video:** Create a high-quality video walkthrough demonstrating:
+    - Setting up a new project.
+    - Integrating the API key into a third-party app.
+    - Real-time notification delivery via Socket.IO.
+- [ ] **Developer SDK:** Build a lieight NPM package (`notifyhub-node-sdk`) to simplify integration for Node.js developers.
+
+---
+
+## Long-Term Vision
+- **Webhooks:** Allow third-party apps to receive status updates (delivered/failed) via webhook callbacks.
+- **Advanced Analytics:** Add a "Delivery Heatmap" to show peak notification times.
+- **Multi-Tenancy:** Enhanced support for large organizations managing multiple teams.
+
+---
+*If you have suggestions for NotifyHub, feel free to open an issue or submit a PR!*
 
 ## Contribution
 
