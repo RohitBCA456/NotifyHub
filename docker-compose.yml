@@ -1,0 +1,39 @@
+services:
+  backend:
+    build: ./Backend
+    ports:
+    - 3000:3000
+    volumes:
+    - ./Backend:/app
+    - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    env_file:
+      - ./Backend/.env
+    depends_on:
+      - mongoDB
+  frontend:
+    build: ./Frontend
+    ports:
+    - 5173:5173
+    volumes:
+    - ./Frontend:/app
+    - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    env_file:
+      - ./Frontend/.env
+
+  mongoDB:
+    image: mongo:latest
+    ports:
+    - 27017:27017
+    volumes:
+    - mongo-data:/data/db
+
+volumes:
+  mongo-data:
+  
+    
+    
+
