@@ -1,18 +1,18 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { ThemeProvider } from "./context/ThemeContext";
-import RootLayout from "./components/RootLayout";
+import { ThemeProvider } from "./context/ThemeContext.jsx";
+import RootLayout from "./components/RootLayout.jsx";
 import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
-import HeroSectionInbox from "./components/HeroSectionInProjects";
-import HeroSectionDashboard from "./components/HeroSectionDashboard";
-import HeroSectionDocs from "./components/HeroSectionDocs";
+import HeroSectionInbox from "./components/HeroSectionInProjects.jsx";
+import HeroSectionDashboard from "./components/HeroSectionDashboard.jsx";
+import HeroSectionDocs from "./components/HeroSectionDocs.jsx";
 import ProfilePage from "./pages/Profile.page";
-import CreateProjectPage from "./pages/createProject.page";
-import SettingsPage from "./pages/setting.page";
-import ViewProject from "./pages/ViewProject.page";
-import AppWrapper from "./components/AppWrapper";
+import CreateProjectPage from "./pages/createProject.page.jsx";
+import SettingsPage from "./pages/setting.page.jsx";
+import ViewProject from "./pages/ViewProject.page.jsx";
+import AppWrapper from "./components/AppWrapper.jsx";
 import { Navigate } from "react-router-dom";
-import NotificationPreferencePage from "./pages/NotificationPreference.page";
-import AboutUs from "./components/HeroSectionAboutUs";
+import NotificationPreferencePage from "./pages/NotificationPreference.page.jsx";
+import AboutUs from "./components/HeroSectionAboutUs.jsx";
 
 const router = createBrowserRouter([
   {
