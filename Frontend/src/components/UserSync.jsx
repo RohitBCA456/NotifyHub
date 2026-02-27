@@ -22,6 +22,37 @@ const UserSync = () => {
             email: user.primaryEmailAddress?.emailAddress,
           };
 
+          const userId = localStorage.getItem("userId");
+
+          if (userId) {
+            const cacheResponse = await fetch(
+              "https://notifyhub-backend-gral.onrender.com/api/users/cache-profile",
+              {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ userId }),
+              },
+            );
+
+            if (cacheResponse.ok) {
+              console.log("Cache Hit");
+              const data = await cacheResponse.json();
+
+              if (data && data.user) {
+                dispatch(setUser(data.user));
+                console.log("Data dispatched to redux by cache");
+                return;
+              } else {
+                console.error("Data not available");
+              }
+              hasSynced.current = true;
+            }
+          }
+
           const response = await fetch(
             "https://notifyhub-backend-gral.onrender.com/api/users/save-credentials",
             {
@@ -32,11 +63,13 @@ const UserSync = () => {
                 Authorization: `Bearer ${token}`,
               },
               body: JSON.stringify(userData),
-            }
+            },
           );
 
           if (response.ok) {
             const data = await response.json();
+
+            localStorage.setItem("userId", data?.user?._id);
 
             if (data && data.user) {
               dispatch(setUser(data.user));
@@ -44,7 +77,7 @@ const UserSync = () => {
             } else {
               console.error(
                 "Backend response ok, but 'user' object missing:",
-                data
+                data,
               );
             }
             hasSynced.current = true;

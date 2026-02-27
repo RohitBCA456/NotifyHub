@@ -23,15 +23,39 @@ const NotificationPreferencePage = () => {
     email: false,
     sms: false,
     inapp: false,
-    quietHours: {
-      enabled: false,
-      start: "22:00",
-      end: "08:00",
-    },
+    quietHours: { enabled: false, start: "22:00", end: "08:00" },
   });
 
-  // 1. Fetch existing preferences
-  const { data: serverData, isLoading } = useQuery({
+  // 1. Fetch from REDIS
+  const {
+    data: cacheResponse,
+    isError: isCacheError,
+    isSuccess: isCacheSuccess,
+    fetchStatus, 
+  } = useQuery({
+    queryKey: ["preferences-cache", appId],
+    queryFn: async () => {
+      const res = await axios.post(
+        `https://notifyhub-backend-gral.onrender.com/api/notifications/cache-preferences`,
+        { appId },
+        { withCredentials: true },
+      );
+      return res.data;
+    },
+    enabled: !!appId,
+    retry: false,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const isRedisDone = fetchStatus === "idle";
+
+  const needsDbFetch =
+    !!appId && isRedisDone && (isCacheError || !cacheResponse?.preferences);
+
+  // console.log("Redis Finished:", isRedisDone, "Triggering DB?", needsDbFetch);
+
+  // 3. Primary DB Fetch (Conditional)
+  const { data: serverData } = useQuery({
     queryKey: ["preferences", appId],
     queryFn: async () => {
       const res = await axios.get(
@@ -40,39 +64,60 @@ const NotificationPreferencePage = () => {
       );
       return res.data;
     },
-    enabled: !!appId,
+    enabled: needsDbFetch, 
   });
 
+  // 4. Sync State Logic
   useEffect(() => {
-    if (serverData) {
+    const source = cacheResponse || serverData;
+
+    if (source) {
+      const parseIfString = (val) =>
+        typeof val === "string" ? JSON.parse(val) : val;
+
+      const resolvedPrefs = parseIfString(source.preferences);
+      const resolvedQuiet = parseIfString(source.quietHours);
+
       setPrefs({
-        ...serverData.preferences,
-        quietHours: serverData.quietHours || {
+        email: resolvedPrefs?.email || false,
+        sms: resolvedPrefs?.sms || false,
+        inapp: resolvedPrefs?.inapp || false,
+        quietHours: resolvedQuiet || {
           enabled: false,
           start: "22:00",
           end: "08:00",
         },
       });
     }
-  }, [serverData]);
+  }, [cacheResponse, serverData]);
 
-  // 2. Change Detection Logic
+  // 5. Change Detection Logic (Updated to use active source)
   const hasChanges = useMemo(() => {
-    // Check if serverData exists at all
-    if (!serverData) return false;
+    // Identify the current source of truth from the backend/cache
+    const activeSource =
+      cacheResponse && Object.keys(cacheResponse).length > 0
+        ? cacheResponse
+        : serverData;
 
-    const sPrefs = serverData.preferences;
-    const sQuiet = serverData.quietHours;
+    if (!activeSource || !activeSource.preferences) return false;
 
-    return (
-      prefs.email !== sPrefs?.email ||
-      prefs.sms !== sPrefs?.sms ||
-      prefs.inapp !== sPrefs?.inapp ||
-      prefs.quietHours.enabled !== sQuiet?.enabled ||
-      prefs.quietHours.start !== sQuiet?.start ||
-      prefs.quietHours.end !== sQuiet?.end
-    );
-  }, [prefs, serverData]);
+    const parseIfString = (val) =>
+      typeof val === "string" ? JSON.parse(val) : val;
+
+    const sPrefs = parseIfString(activeSource.preferences);
+    const sQuiet = parseIfString(activeSource.quietHours);
+
+    // Compare local state 'prefs' against parsed source data
+    const isDifferent =
+      prefs.email !== (sPrefs?.email ?? false) ||
+      prefs.sms !== (sPrefs?.sms ?? false) ||
+      prefs.inapp !== (sPrefs?.inapp ?? false) ||
+      prefs.quietHours.enabled !== (sQuiet?.enabled ?? false) ||
+      prefs.quietHours.start !== (sQuiet?.start ?? "22:00") ||
+      prefs.quietHours.end !== (sQuiet?.end ?? "08:00");
+
+    return isDifferent;
+  }, [prefs, cacheResponse, serverData]);
 
   // 3. Mutation to save preferences
   const mutation = useMutation({
@@ -83,8 +128,10 @@ const NotificationPreferencePage = () => {
         { withCredentials: true },
       );
     },
+
     onSuccess: () => {
       queryClient.invalidateQueries(["preferences", appId]);
+      queryClient.invalidateQueries(["preferences-cache", appId]);
       toast.success("Settings updated successfully!");
     },
     onError: () => {

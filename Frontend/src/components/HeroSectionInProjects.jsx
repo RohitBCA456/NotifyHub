@@ -13,7 +13,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import ViewApiKey from "./ViewApiKey";
 import Loader from "../components/Loader";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import toast from "react-hot-toast";
 
@@ -29,6 +29,7 @@ const HeroSectionProjects = () => {
 
   const navigate = useNavigate();
   const menuRef = useRef(null);
+  const queryClient = useQueryClient();
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -62,44 +63,39 @@ const HeroSectionProjects = () => {
     return "Just now";
   }
 
-  const {
-    data: projects = [],
-    isLoading,
-    isError,
-  } = useQuery({
+  const { data: projects = [], isLoading } = useQuery({
     queryKey: ["projects"],
     queryFn: async () => {
-      const response = await axios.get(
+      const res = await axios.get(
         "https://notifyhub-backend-gral.onrender.com/api/users/fetch-projects",
-        {
-          withCredentials: true,
-        },
+        { withCredentials: true },
       );
-      console.log("Full Backend Response:", response.data);
-      return response.data.apps;
+      return res.data.apps;
     },
-    refetchInterval: 2000,
+    staleTime: 1000 * 60,
   });
 
-  const handleDeletion = async (projectId) => {
-    console.log("Attempting to delete ID:", projectId);
-
-    try {
-      const response = await axios.delete(
-        "https://notifyhub-backend-gral.onrender.com/api/users/delete-project",
-        {
-          data: { projectId },
-          withCredentials: true,
-        },
+  const deleteMutation = useMutation({
+    mutationFn: async (projectId) => {
+      await axios.delete("https://notifyhub-backend-gral.onrender.com/api/users/delete-project", {
+        data: { projectId },
+        withCredentials: true,
+      });
+      return projectId;
+    },
+    onSuccess: (projectId) => {
+      queryClient.setQueryData(["projects"], (old = []) =>
+        old.filter((p) => p._id !== projectId),
       );
+      toast.success("Project Deleted");
+    },
+    onError: () => {
+      toast.error("Delete failed");
+    },
+  });
 
-      toast.success("Project Deleted successfully.");
-    } catch (error) {
-      console.error(
-        "Deletion Error:",
-        error.response?.data?.message || error.message,
-      );
-    }
+  const handleDeletion = (projectId) => {
+    deleteMutation.mutate(projectId);
   };
 
   const filteredProjects = projects.filter((project) =>

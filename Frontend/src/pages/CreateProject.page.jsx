@@ -15,12 +15,14 @@ import ApiKeyDisplay from "../components/ApiKeyDisplay";
 import Loader from "../components/Loader";
 import axios from "axios";
 import toast from "react-hot-toast";
+// 1. Import TanStack Query hooks
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const CreateProjectPage = () => {
   const { isDarkMode } = useTheme();
   const navigate = useNavigate();
+  const queryClient = useQueryClient(); // 2. Initialize Query Client
 
-  // Step 1: Form | Step 2: Loading | Step 3: Success
   const [step, setStep] = useState(1);
   const [projectName, setProjectName] = useState("");
   const [preferences, setPreferences] = useState({
@@ -37,6 +39,32 @@ const CreateProjectPage = () => {
 
   const [generatedKey, setGeneratedKey] = useState("");
 
+  // 3. Define the Creation Mutation
+  const createProjectMutation = useMutation({
+    mutationFn: async (payload) => {
+      const response = await axios.post(
+        "https://notifyhub-backend-gral.onrender.com/api/users/create-app",
+        payload,
+        { withCredentials: true },
+      );
+      return response.data;
+    },
+    onSuccess: (data) => {
+      // THIS IS THE CRITICAL FIX:
+      // It marks the 'projects' list as stale so React Query refetches it.
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+
+      toast.success("Project created successfully.");
+      setGeneratedKey(data.app.apiKey);
+      setStep(3);
+    },
+    onError: (error) => {
+      setStep(1);
+      const errorMsg = error.response?.data?.message || "Something went wrong";
+      toast.error(errorMsg);
+    },
+  });
+
   const handleToggle = (key) => {
     setPreferences((prev) => ({ ...prev, [key]: !prev[key] }));
   };
@@ -49,35 +77,22 @@ const CreateProjectPage = () => {
     if (!projectName) return toast.error("Please enter a project name");
 
     const selectedChannels = Object.keys(preferences).filter(
-      (key) => preferences[key]
+      (key) => preferences[key],
     );
 
     if (selectedChannels.length === 0) {
       return toast.error("Please select at least one notification channel");
     }
 
-    try {
-      setStep(2);
+    const payload = {
+      name: projectName,
+      channel: selectedChannels.map((c) => c.toLowerCase()),
+      quietHours: quietHours,
+    };
 
-      // 3. Updated Payload to include quietHours
-      const response = await axios.post(
-        "https://notifyhub-backend-gral.onrender.com/api/users/create-app",
-        {
-          name: projectName,
-          channel: selectedChannels.map((c) => c.toLowerCase()),
-          quietHours: quietHours, // Sending the object: {enabled, start, end}
-        },
-        { withCredentials: true }
-      );
-
-      toast.success("Project created successfully.");
-      setGeneratedKey(response.data.app.apiKey);
-      setStep(3);
-    } catch (error) {
-      setStep(1);
-      const errorMsg = error.response?.data?.message || "Something went wrong";
-      toast.error(errorMsg);
-    }
+    setStep(2);
+    // 4. Use the mutation instead of a direct axios call
+    createProjectMutation.mutate(payload);
   };
 
   const copyToClipboard = (text) => {
@@ -93,7 +108,6 @@ const CreateProjectPage = () => {
           : "bg-slate-50 text-slate-600"
       }`}
     >
-      {/* STEP 1: CONFIGURATION FORM */}
       {step === 1 && (
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 w-full animate-in fade-in duration-500">
           <div className="mb-12 text-center">
@@ -113,7 +127,6 @@ const CreateProjectPage = () => {
           </div>
 
           <div className="space-y-6">
-            {/* Project Name Input */}
             <div
               className={`p-8 rounded-3xl border transition-colors ${
                 isDarkMode
@@ -137,7 +150,6 @@ const CreateProjectPage = () => {
               />
             </div>
 
-            {/* Channel Toggles */}
             <div
               className={`p-8 rounded-3xl border transition-colors ${
                 isDarkMode
@@ -173,9 +185,13 @@ const CreateProjectPage = () => {
               </div>
             </div>
 
-            <div className={`p-8 rounded-3xl border transition-colors ${
-                isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200 shadow-sm"
-              }`}>
+            <div
+              className={`p-8 rounded-3xl border transition-colors ${
+                isDarkMode
+                  ? "bg-slate-900 border-slate-800"
+                  : "bg-white border-slate-200 shadow-sm"
+              }`}
+            >
               <div className="flex items-center justify-between mb-6">
                 <label className="text-xs font-bold uppercase tracking-widest text-blue-500 block">
                   Step 3: Quiet Hours (Optional)
@@ -184,41 +200,65 @@ const CreateProjectPage = () => {
                   onClick={handleQuietHoursToggle}
                   className={`w-12 h-6 rounded-full relative transition-all ${quietHours.enabled ? "bg-blue-600" : "bg-slate-700"}`}
                 >
-                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${quietHours.enabled ? "left-7" : "left-1"}`} />
+                  <div
+                    className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${quietHours.enabled ? "left-7" : "left-1"}`}
+                  />
                 </button>
               </div>
 
-              <div className={`flex items-center gap-4 mb-6 ${!quietHours.enabled && "opacity-40"}`}>
+              <div
+                className={`flex items-center gap-4 mb-6 ${!quietHours.enabled && "opacity-40"}`}
+              >
                 <div className="p-3 rounded-xl bg-purple-500/10 text-purple-500">
                   <Moon size={22} />
                 </div>
                 <div>
-                  <p className={`font-bold ${isDarkMode ? "text-white" : "text-slate-900"}`}>Do Not Disturb</p>
-                  <p className="text-sm opacity-60">Mute notifications during a specific window</p>
+                  <p
+                    className={`font-bold ${isDarkMode ? "text-white" : "text-slate-900"}`}
+                  >
+                    Do Not Disturb
+                  </p>
+                  <p className="text-sm opacity-60">
+                    Mute notifications during a specific window
+                  </p>
                 </div>
               </div>
 
               {quietHours.enabled && (
                 <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-300">
-                  <div className={`flex flex-col gap-1 p-3 rounded-2xl border ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+                  <div
+                    className={`flex flex-col gap-1 p-3 rounded-2xl border ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200"}`}
+                  >
                     <label className="text-[10px] font-bold uppercase opacity-50 flex items-center gap-1">
                       <Clock size={10} /> Start
                     </label>
                     <input
                       type="time"
                       value={quietHours.start}
-                      onChange={(e) => setQuietHours(prev => ({...prev, start: e.target.value}))}
+                      onChange={(e) =>
+                        setQuietHours((prev) => ({
+                          ...prev,
+                          start: e.target.value,
+                        }))
+                      }
                       className="bg-transparent font-bold outline-none"
                     />
                   </div>
-                  <div className={`flex flex-col gap-1 p-3 rounded-2xl border ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+                  <div
+                    className={`flex flex-col gap-1 p-3 rounded-2xl border ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-slate-50 border-slate-200"}`}
+                  >
                     <label className="text-[10px] font-bold uppercase opacity-50 flex items-center gap-1">
                       <Clock size={10} /> End
                     </label>
                     <input
                       type="time"
                       value={quietHours.end}
-                      onChange={(e) => setQuietHours(prev => ({...prev, end: e.target.value}))}
+                      onChange={(e) =>
+                        setQuietHours((prev) => ({
+                          ...prev,
+                          end: e.target.value,
+                        }))
+                      }
                       className="bg-transparent font-bold outline-none"
                     />
                   </div>
@@ -228,9 +268,12 @@ const CreateProjectPage = () => {
 
             <button
               onClick={handleCreate}
-              className="w-full group flex items-center justify-center gap-3 py-5 bg-blue-600 hover:bg-blue-500 text-white text-xl font-black rounded-3xl shadow-2xl shadow-blue-500/30 transition-all hover:-translate-y-1 active:scale-95"
+              disabled={createProjectMutation.isPending}
+              className="w-full group flex items-center justify-center gap-3 py-5 bg-blue-600 hover:bg-blue-500 text-white text-xl font-black rounded-3xl shadow-2xl shadow-blue-500/30 transition-all hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Deploy & Generate Key
+              {createProjectMutation.isPending
+                ? "Provisioning..."
+                : "Deploy & Generate Key"}
               <ArrowRight
                 size={24}
                 className="group-hover:translate-x-1 transition-transform"
@@ -240,7 +283,6 @@ const CreateProjectPage = () => {
         </div>
       )}
 
-      {/* STEP 2: REUSABLE LOADER */}
       {step === 2 && (
         <Loader
           title="Provisioning Infrastructure..."
@@ -249,7 +291,6 @@ const CreateProjectPage = () => {
         />
       )}
 
-      {/* STEP 3: SUCCESS & API KEY DISPLAY */}
       {step === 3 && (
         <ApiKeyDisplay
           generatedKey={generatedKey}
@@ -271,8 +312,8 @@ const PreferenceToggle = ({ icon, title, active, onClick, isDarkMode }) => (
       active
         ? "border-blue-500 bg-blue-500/5 ring-1 ring-blue-500"
         : isDarkMode
-        ? "bg-slate-800 border-slate-700 hover:border-slate-600"
-        : "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
+          ? "bg-slate-800 border-slate-700 hover:border-slate-600"
+          : "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
     }`}
   >
     <div
@@ -280,8 +321,8 @@ const PreferenceToggle = ({ icon, title, active, onClick, isDarkMode }) => (
         active
           ? "bg-blue-600 text-white shadow-lg"
           : isDarkMode
-          ? "bg-slate-700 text-slate-400"
-          : "bg-slate-50 text-slate-400 border border-slate-100"
+            ? "bg-slate-700 text-slate-400"
+            : "bg-slate-50 text-slate-400 border border-slate-100"
       }`}
     >
       {icon}
@@ -300,8 +341,8 @@ const PreferenceToggle = ({ icon, title, active, onClick, isDarkMode }) => (
         active
           ? "bg-blue-600 border-blue-600"
           : isDarkMode
-          ? "border-slate-600"
-          : "border-slate-300"
+            ? "border-slate-600"
+            : "border-slate-300"
       }`}
     >
       {active && <Check size={16} className="text-white" />}

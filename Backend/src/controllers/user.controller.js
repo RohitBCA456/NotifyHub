@@ -4,6 +4,7 @@ import { generateApiKey } from "../utils/generateApiKey.js";
 import { UserPreference } from "../models/userPreference.model.js";
 import { Notification } from "../models/notification.model.js";
 import mongoose from "mongoose";
+import { client } from "../config/redis.js";
 
 export const saveCredentials = async (req, res) => {
   try {
@@ -29,6 +30,17 @@ export const saveCredentials = async (req, res) => {
 
     await newUser.save();
 
+    const key = `profile:${newUser._id}`;
+
+    await client.hSet(key, {
+      id: newUser._id.toString(),
+      username: newUser.username,
+      email: newUser.email,
+      imageUrl: newUser.imageUrl,
+    });
+
+    await client.expire(key, 86400);
+
     const options = {
       httpOnly: true,
       secure: true,
@@ -51,11 +63,23 @@ export const logoutUser = async (req, res) => {
   try {
     const userId = req.userId;
 
+    if (!userId) {
+      return res.status(400).json({
+        message: "userId is missing",
+      });
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { $set: { webToken: null, sessionId: null } },
       { new: true },
     );
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        message: "User not found in DB",
+      });
+    }
 
     console.log("Database updated successfully:", updatedUser ? "Yes" : "No");
 
@@ -73,7 +97,7 @@ export const logoutUser = async (req, res) => {
   } catch (error) {
     return res
       .status(500)
-      .json({ message: "Internal server error.", error: error.message });
+      .json({ message: "Internal server error", error: error.message });
   }
 };
 
@@ -118,11 +142,23 @@ export const createApp = async (req, res) => {
       { upsert: true, new: true },
     );
 
+    const key = `pref:${newApp._id}`;
+
+    await client.hSet(key, {
+      preferences: JSON.stringify({
+        email: activeChannels.includes("email"),
+        sms: activeChannels.includes("sms"),
+        inapp:
+          activeChannels.includes("in-app") || activeChannels.includes("inapp"),
+      }),
+      quietHours: JSON.stringify(quietHours || defaultQuietHours),
+    });
+    await client.expire(key, 86400);
+
     return res
       .status(201)
       .json({ message: "App created successfully.", app: newApp });
   } catch (error) {
-    console.error("Create App Error:", error);
     return res
       .status(500)
       .json({ message: "Internal server error.", error: error.message });
@@ -132,6 +168,13 @@ export const createApp = async (req, res) => {
 export const fetchProjects = async (req, res) => {
   try {
     const userId = req.userId;
+
+    if (!userId) {
+      return res.status(400).json({
+        message: "UserId is missing",
+      });
+    }
+
     const fiveDaysAgo = new Date();
     fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
 
@@ -184,7 +227,6 @@ export const fetchProjects = async (req, res) => {
       apps: apps || [],
     });
   } catch (error) {
-    console.error("Aggregation Error:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -192,6 +234,7 @@ export const fetchProjects = async (req, res) => {
 export const deleteProject = async (req, res) => {
   try {
     const { projectId } = req.body;
+    const userId = req.userId;
 
     if (!projectId) {
       return res.status(400).json({ message: "ProjectId is required." });
@@ -211,7 +254,30 @@ export const deleteProject = async (req, res) => {
       message: "Project and all associated notifications deleted successfully.",
     });
   } catch (error) {
-    console.error("Delete Error:", error);
     return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getCacheProfile = async (req, res) => {
+  try {
+    const key = `profile:${req.body.userId}`;
+
+    const cacheProfile = await client.hGetAll(key);
+
+    if (!cacheProfile || Object.keys(cacheProfile).length === 0) {
+      return res.status(404).json({
+        message: "Cache Miss",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Cache Hit",
+      user: cacheProfile,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal Server Error",
+      err: error.message,
+    });
   }
 };

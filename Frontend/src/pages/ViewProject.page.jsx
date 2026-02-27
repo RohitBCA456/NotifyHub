@@ -17,22 +17,43 @@ const ViewProjectPage = () => {
   const [stats, setStats] = useState({ totalSent: "0", successRate: "0%" });
   const [loading, setLoading] = useState(true);
   const [isNavigating, setIsNavigating] = useState(false);
-  let user = useSelector((state) => state.user.userData);
-
+  let userId = localStorage.getItem("userId");
   // 1. Initial Fetch (Runs only once on load or projectId change)
   const fetchInitialStats = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `https://notifyhub-backend-gral.onrender.com/api/analytics/project-stats/${projectId}`
+
+      // STEP 1: Try Redis cache first
+      let response = await fetch(
+        `https://notifyhub-backend-gral.onrender.com/api/analytics/project-cache/${projectId}`,
       );
-      if (!response.ok) throw new Error("Stats fetch failed");
-      const data = await response.json();
-      
-      // Assuming your REST API returns the flat object { totalSent, successRate }
-      setStats(data);
+
+      // STEP 2: If cache hit
+      if (response.ok) {
+        const data = await response.json();
+
+        console.log("Cache hit", data);
+
+        setStats({
+          totalSent: data.totalSent,
+          successRate: data.successRate,
+        });
+      }
+
+      // STEP 3: Cache miss → Fetch DB
+      else {
+        console.log("Cache miss → Fetching DB");
+
+        response = await fetch(
+          `https://notifyhub-backend-gral.onrender.com/api/analytics/project-stats/${projectId}`,
+        );
+
+        const data = await response.json();
+
+        setStats(data);
+      }
     } catch (err) {
-      console.error("Stats fetch error:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -50,16 +71,16 @@ const ViewProjectPage = () => {
     // Listen for real-time updates
     socket.on("stats_updated", (newData) => {
       console.log("Real-time update received:", newData);
-      
+
       // Accessing the specific notification stats from the nested object
       if (newData.projectStats) {
         const { total, successRate } = newData.projectStats;
 
         console.log("Updating stats with:", { total, successRate });
-        
+
         setStats({
           totalSent: total.toString(),
-          successRate: `${successRate.toFixed(1)}%`
+          successRate: `${successRate.toFixed(1)}%`,
         });
       }
     });
@@ -151,12 +172,12 @@ const ViewProjectPage = () => {
 
         {/* Graphs and Charts */}
         <div className="mb-10">
-          <AnalyticsChart isDarkMode={isDarkMode} currentUserId={user?._id} />
+          <AnalyticsChart isDarkMode={isDarkMode} currentUserId={userId} />
         </div>
 
         {/* Real-time Activity Feed */}
         <div className="mb-10">
-          <NotificationFeed isDarkMode={isDarkMode} currentUserId={user?._id} />
+          <NotificationFeed isDarkMode={isDarkMode} currentUserId={userId} />
         </div>
       </div>
     </div>

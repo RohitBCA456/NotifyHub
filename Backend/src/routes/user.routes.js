@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  getCacheProfile,
   deleteProject,
   fetchProjects,
   logoutUser,
@@ -20,5 +21,8 @@ router
   .route("/fetch-projects")
   .get(verifyAuthentication, generalLimiter, fetchProjects);
 router.route("/delete-project").delete(verifyAuthentication, deleteProject);
+router
+  .route("/cache-profile")
+  .post(verifyAuthentication, generalLimiter, getCacheProfile);
 
 export { router as userRoutes };

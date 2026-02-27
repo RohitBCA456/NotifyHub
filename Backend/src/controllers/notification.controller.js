@@ -8,6 +8,7 @@ import { sendSMS } from "../workers/sms.worker.js";
 import { emitInApp } from "../workers/inapp.worker.js";
 import { getNotificationStats } from "../services/stats.service.js";
 import { getProjectStat } from "../services/projectStats.service.js";
+import { client } from "../config/redis.js";
 
 export const createNotification = async (req, res) => {
   try {
@@ -59,13 +60,9 @@ export const sendNotification = async (notification) => {
 
     if (channel === "email") {
       await sendEmail(to, subject, message, notification);
-    } 
-
-    else if (channel === "sms") {
+    } else if (channel === "sms") {
       await sendSMS(to, message, notification);
-    } 
-
-    else if (channel === "inapp") {
+    } else if (channel === "inapp") {
       emitInApp(appId, userId, {
         notificationId: _id,
         message,
@@ -82,6 +79,15 @@ export const sendNotification = async (notification) => {
       notificationStats: stats[0] || {},
       projectStats: projectStats[0] || {},
     });
+
+    const key = `PStats:${appId}`;
+
+    await client.hSet(key, {
+      totalSent: projectStats[0]?.total,
+      successRate: projectStats[0]?.successRate,
+    });
+
+    await client.expire(key, 86400);
   } catch (error) {
     await Notification.findByIdAndUpdate(notification._id, {
       status: "failed",
@@ -111,6 +117,15 @@ export const updateNotificationPreference = async (req, res) => {
       { upsert: true, new: true },
     );
 
+    const key = `pref:${appId}`;
+
+    await client.hSet(key, {
+      preferences: JSON.stringify(channelPrefs),
+      quietHours: JSON.stringify(quietHours),
+    });
+
+    await client.expire(key, 86400);
+
     return res.status(200).json({ message: "Updated Preference successfully" });
   } catch (error) {
     console.error("Update Error:", error);
@@ -122,13 +137,19 @@ export const getNotificationPreference = async (req, res) => {
   try {
     const { appId } = req.params;
 
+    if (!appId) {
+      return res.status(400).json({
+        message: "AppId is required",
+      });
+    }
+
     const preference = await UserPreference.findOne({
       appId,
       userId: req.userId,
     });
 
     if (!preference) {
-      return res.status(200).json({
+      return res.status(404).json({
         preferences: {
           email: false,
           sms: false,
@@ -141,5 +162,34 @@ export const getNotificationPreference = async (req, res) => {
   } catch (error) {
     console.error("Get Preference Error:", error);
     return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getCacheNotificationPreference = async (req, res) => {
+  try {
+    const { appId } = req.body;
+
+    if (!appId) {
+      return res.status(400).json({
+        message: "appId is required",
+      });
+    }
+
+    const key = `pref:${appId}`;
+
+    const preference = await client.hGetAll(key);
+
+    if (!preference || Object.keys(preference).length === 0) {
+      return res.status(404).json({
+        message: "Preference not found on cache",
+      });
+    }
+
+    return res.status(200).json(preference);
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal Server Error",
+      err: error,
+    });
   }
 };

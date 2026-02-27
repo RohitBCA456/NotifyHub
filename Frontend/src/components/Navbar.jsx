@@ -84,9 +84,12 @@ const Navbar = () => {
         credentials: "include",
       });
 
+      await signOut();
+
+      localStorage.removeItem("userId");
+
       dispatch(clearUser());
 
-      await signOut();
 
       toast.success("Logged out successfully.");
 
