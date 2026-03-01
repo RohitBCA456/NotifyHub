@@ -43,7 +43,7 @@ const CreateProjectPage = () => {
   const createProjectMutation = useMutation({
     mutationFn: async (payload) => {
       const response = await axios.post(
-        "https://notifyhub-backend-gral.onrender.com/api/users/create-app",
+        "http://localhost:3000/api/users/create-app",
         payload,
         { withCredentials: true },
       );

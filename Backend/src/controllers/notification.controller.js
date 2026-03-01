@@ -1,4 +1,4 @@
-import { sendEmail } from "../workers/email.work.js";
+import { sendEmail } from "../workers/email.worker.js";
 import { Notification } from "../models/notification.model.js";
 import { publishToQueue } from "../config/rabbitmq.js";
 import { UserPreference } from "../models/userPreference.model.js";
@@ -49,8 +49,12 @@ export const createNotification = async (req, res) => {
       message: "Notifications queued successfully",
     });
   } catch (error) {
-    console.error("Error creating notification:", error);
-    return res.status(500).json({ message: "Failed to create notification." });
+    return res
+      .status(500)
+      .json({
+        message: "Failed to create notification.",
+        error: error.message,
+      });
   }
 };
 

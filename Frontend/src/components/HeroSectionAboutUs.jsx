@@ -13,7 +13,7 @@ const AboutUs = () => {
     queryFn: async () => {
       try {
         const cacheRes = await axios.get(
-          "https://notifyhub-backend-gral.onrender.com/api/analytics/cache-globalStats",
+          "http://localhost:3000/api/analytics/cache-globalStats",
           { withCredentials: true },
         );
 
@@ -25,7 +25,7 @@ const AboutUs = () => {
 
         if (error.response?.status === 404) {
           const dbRes = await axios.get(
-            "https://notifyhub-backend-gral.onrender.com/api/analytics/stats",
+            "http://localhost:3000/api/analytics/stats",
             { withCredentials: true },
           );
 

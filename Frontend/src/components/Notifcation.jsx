@@ -3,7 +3,7 @@ import { Mail, Globe, MessageSquare, Loader2, CheckCircle2, AlertCircle } from '
 import { io } from "socket.io-client";
 
 // Connect to the /ui namespace defined in your backend
-const socket = io("https://notifyhub-backend-gral.onrender.com/ui", { autoConnect: false });
+const socket = io("http://localhost:3000/ui", { autoConnect: false });
 
 const NotificationFeed = ({ isDarkMode, currentUserId }) => {
   const [feedItems, setFeedItems] = useState([]);
