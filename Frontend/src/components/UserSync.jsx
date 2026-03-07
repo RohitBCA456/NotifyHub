@@ -26,7 +26,7 @@ const UserSync = () => {
 
           if (userId) {
             const cacheResponse = await fetch(
-              "http://localhost:3000/api/users/cache-profile",
+              "https://notifyhub-backend-gral.onrender.com/api/users/cache-profile",
               {
                 method: "POST",
                 credentials: "include",
@@ -54,7 +54,7 @@ const UserSync = () => {
           }
 
           const response = await fetch(
-            "http://localhost:3000/api/users/save-credentials",
+            "https://notifyhub-backend-gral.onrender.com/api/users/save-credentials",
             {
               method: "POST",
               credentials: "include",

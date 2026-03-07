@@ -67,7 +67,7 @@ const HeroSectionProjects = () => {
     queryKey: ["projects"],
     queryFn: async () => {
       const res = await axios.get(
-        "http://localhost:3000/api/users/fetch-projects",
+        "https://notifyhub-backend-gral.onrender.com/api/users/fetch-projects",
         { withCredentials: true },
       );
       return res.data.apps;
@@ -77,7 +77,7 @@ const HeroSectionProjects = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (projectId) => {
-      await axios.delete("http://localhost:3000/api/users/delete-project", {
+      await axios.delete("https://notifyhub-backend-gral.onrender.com/api/users/delete-project", {
         data: { projectId },
         withCredentials: true,
       });

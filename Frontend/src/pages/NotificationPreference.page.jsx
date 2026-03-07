@@ -36,7 +36,7 @@ const NotificationPreferencePage = () => {
     queryKey: ["preferences-cache", appId],
     queryFn: async () => {
       const res = await axios.post(
-        `http://localhost:3000/api/notifications/cache-preferences`,
+        `https://notifyhub-backend-gral.onrender.com/api/notifications/cache-preferences`,
         { appId },
         { withCredentials: true },
       );
@@ -59,7 +59,7 @@ const NotificationPreferencePage = () => {
     queryKey: ["preferences", appId],
     queryFn: async () => {
       const res = await axios.get(
-        `http://localhost:3000/api/notifications/get-preferences/${appId}`,
+        `https://notifyhub-backend-gral.onrender.com/api/notifications/get-preferences/${appId}`,
         { withCredentials: true },
       );
       return res.data;
@@ -123,7 +123,7 @@ const NotificationPreferencePage = () => {
   const mutation = useMutation({
     mutationFn: async (newPrefs) => {
       return await axios.post(
-        "http://localhost:3000/api/notifications/update-preferences",
+        "https://notifyhub-backend-gral.onrender.com/api/notifications/update-preferences",
         { appId, preferences: newPrefs },
         { withCredentials: true },
       );

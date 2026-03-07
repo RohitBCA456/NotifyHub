@@ -21,7 +21,6 @@ describe("Send Notification Controller", () => {
     const emitStatsMock = mock.fn();
     const redisMock = { hSet: mock.fn(async () => {}), expire: mock.fn(async () => {}) };
 
-    // Use esmock inside the test to isolate dependencies
     const { sendNotification } = await esmock("../../controllers/notification.controller.js", {
       "../../workers/email.worker.js": { sendEmail: sendEmailMockFn },
       "../../services/stats.service.js": { getNotificationStats: statsMockFn },

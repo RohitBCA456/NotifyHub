@@ -8,7 +8,7 @@ import Loader from "../components/Loader";
 import { useSelector } from "react-redux";
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:3000/ui", { autoConnect: false });
+const socket = io("https://notifyhub-backend-gral.onrender.com/ui", { autoConnect: false });
 
 const ViewProjectPage = () => {
   const { isDarkMode } = useTheme();
@@ -25,7 +25,7 @@ const ViewProjectPage = () => {
 
       // STEP 1: Try Redis cache first
       let response = await fetch(
-        `http://localhost:3000/api/analytics/project-cache/${projectId}`,
+        `https://notifyhub-backend-gral.onrender.com/api/analytics/project-cache/${projectId}`,
       );
 
       // STEP 2: If cache hit
@@ -45,7 +45,7 @@ const ViewProjectPage = () => {
         console.log("Cache miss → Fetching DB");
 
         response = await fetch(
-          `http://localhost:3000/api/analytics/project-stats/${projectId}`,
+          `https://notifyhub-backend-gral.onrender.com/api/analytics/project-stats/${projectId}`,
         );
 
         const data = await response.json();

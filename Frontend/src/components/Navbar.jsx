@@ -79,7 +79,7 @@ const Navbar = () => {
       setIsRedirecting(true);
       setIsProfileOpen(false);
 
-      await fetch("http://localhost:3000/api/users/logout", {
+      await fetch("https://notifyhub-backend-gral.onrender.com/api/users/logout", {
         method: "GET",
         credentials: "include",
       });
