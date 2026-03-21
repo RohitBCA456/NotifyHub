@@ -13,6 +13,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import { config } from "../../config";
+
+const BACKEND_API = config.services.backendService;
 
 const NotificationPreferencePage = () => {
   const { isDarkMode } = useTheme();
@@ -36,7 +39,7 @@ const NotificationPreferencePage = () => {
     queryKey: ["preferences-cache", appId],
     queryFn: async () => {
       const res = await axios.post(
-        `https://notifyhub-backend-gral.onrender.com/api/notifications/cache-preferences`,
+        `${BACKEND_API}/api/notifications/cache-preferences`,
         { appId },
         { withCredentials: true },
       );
@@ -59,7 +62,7 @@ const NotificationPreferencePage = () => {
     queryKey: ["preferences", appId],
     queryFn: async () => {
       const res = await axios.get(
-        `https://notifyhub-backend-gral.onrender.com/api/notifications/get-preferences/${appId}`,
+        `${BACKEND_API}/api/notifications/get-preferences/${appId}`,
         { withCredentials: true },
       );
       return res.data;
@@ -123,7 +126,7 @@ const NotificationPreferencePage = () => {
   const mutation = useMutation({
     mutationFn: async (newPrefs) => {
       return await axios.post(
-        "https://notifyhub-backend-gral.onrender.com/api/notifications/update-preferences",
+        `${BACKEND_API}/api/notifications/update-preferences`,
         { appId, preferences: newPrefs },
         { withCredentials: true },
       );

@@ -2,9 +2,12 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { BarChart3, PieChart as PieChartIcon, Loader2 } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { io } from "socket.io-client";
+import { config } from "../../config";
+
+const BACKEND_API = config.services.backendService;
 
 // Move socket outside or use a ref to prevent multiple connections on re-render
-const socket = io("https://notifyhub-backend-gral.onrender.com/ui", { autoConnect: false });
+const socket = io(`${BACKEND_API}/ui`, { autoConnect: false });
 
 const AnalyticsChart = ({ isDarkMode, currentUserId }) => {
   const { projectId } = useParams();
@@ -59,7 +62,7 @@ const AnalyticsChart = ({ isDarkMode, currentUserId }) => {
   const fetchInitialData = useCallback(async () => {
     try {
       const res = await fetch(
-        `https://notifyhub-backend-gral.onrender.com/api/analytics/chart-data/${projectId}`,
+        `${BACKEND_API}/api/analytics/chart-data/${projectId}`,
       );
       if (!res.ok) throw new Error("Fetch failed");
       const data = await res.json();

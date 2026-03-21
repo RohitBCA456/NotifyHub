@@ -7,8 +7,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import Loader from "../components/Loader";
 import { useSelector } from "react-redux";
 import { io } from "socket.io-client";
+import { config } from "../../config";
 
-const socket = io("https://notifyhub-backend-gral.onrender.com/ui", { autoConnect: false });
+const BACKEND_API = config.services.backendService;
+
+const socket = io(`${BACKEND_API}/ui`, { autoConnect: false });
 
 const ViewProjectPage = () => {
   const { isDarkMode } = useTheme();
@@ -25,7 +28,7 @@ const ViewProjectPage = () => {
 
       // STEP 1: Try Redis cache first
       let response = await fetch(
-        `https://notifyhub-backend-gral.onrender.com/api/analytics/project-cache/${projectId}`,
+        `${BACKEND_API}/api/analytics/project-cache/${projectId}`,
       );
 
       // STEP 2: If cache hit
@@ -45,7 +48,7 @@ const ViewProjectPage = () => {
         console.log("Cache miss → Fetching DB");
 
         response = await fetch(
-          `https://notifyhub-backend-gral.onrender.com/api/analytics/project-stats/${projectId}`,
+          `${BACKEND_API}/api/analytics/project-stats/${projectId}`,
         );
 
         const data = await response.json();

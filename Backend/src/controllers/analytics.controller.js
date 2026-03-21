@@ -9,30 +9,20 @@ export const getGlobalStats = async (req, res) => {
     const activeThreshold = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     const [totalMembers, totalNotifications, activeChannelsCount] =
-      await Promise.all([
-        User.countDocuments(),
-
-        Notification.countDocuments(),
-
-        Notification.distinct("appId", {
-          createdAt: { $gt: activeThreshold },
-        }).then((apps) => apps.length),
-      ]);
+      await Promise.all([User.countDocuments(), Notification.countDocuments()]);
 
     const key = `GStats`;
 
     await client.hSet(key, {
       totalMembers: totalMembers || 0,
       totalNotifications: totalNotifications || 0,
-      activeChannels: activeChannelsCount || 0,
     });
 
-    await client.expire(key, 86400);
+    await client.expire(key);
 
     return res.status(200).json({
       totalMembers: totalMembers || 0,
       totalNotifications: totalNotifications || 0,
-      activeChannels: activeChannelsCount || 0,
     });
   } catch (error) {
     console.error("Global Stats Error:", error);
@@ -102,7 +92,6 @@ export const getCacheProjectStats = async (req, res) => {
 
 export const getCacheGlobalStats = async (req, res) => {
   try {
-
     const key = `GStats`;
 
     const data = await client.hGetAll(key);

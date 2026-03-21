@@ -2,6 +2,9 @@ import { useUser, useAuth } from "@clerk/clerk-react";
 import { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { setUser } from "../Store/userSlice.js";
+import { config } from "../../config.js";
+
+const BACKEND_API = config.services.backendService;
 
 const UserSync = () => {
   const { user } = useUser();
@@ -26,7 +29,7 @@ const UserSync = () => {
 
           if (userId) {
             const cacheResponse = await fetch(
-              "https://notifyhub-backend-gral.onrender.com/api/users/cache-profile",
+              `${BACKEND_API}/api/users/cache-profile`,
               {
                 method: "POST",
                 credentials: "include",
@@ -54,7 +57,7 @@ const UserSync = () => {
           }
 
           const response = await fetch(
-            "https://notifyhub-backend-gral.onrender.com/api/users/save-credentials",
+            `${BACKEND_API}/api/users/save-credentials`,
             {
               method: "POST",
               credentials: "include",

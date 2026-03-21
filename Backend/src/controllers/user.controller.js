@@ -22,6 +22,8 @@ export const saveCredentials = async (req, res) => {
       newUser.sessionId = sessionId;
     } else {
       newUser = await User.create({ username, imageUrl, email, sessionId });
+
+      await client.HINCRBY(`GStats`, 'totalMembers', 1);
     }
 
     const webToken = await newUser.generateWebToken();

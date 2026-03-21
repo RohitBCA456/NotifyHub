@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, Globe, MessageSquare, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { io } from "socket.io-client";
+import { config } from '../../config';
+
+const BACKEND_API = config.services.backendService;
 
 // Connect to the /ui namespace defined in your backend
-const socket = io("https://notifyhub-backend-gral.onrender.com/ui", { autoConnect: false });
+const socket = io(`${BACKEND_API}/ui`, { autoConnect: false });
 
 const NotificationFeed = ({ isDarkMode, currentUserId }) => {
   const [feedItems, setFeedItems] = useState([]);

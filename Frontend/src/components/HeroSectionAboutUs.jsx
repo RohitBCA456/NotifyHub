@@ -4,6 +4,9 @@ import { useTheme } from "../context/ThemeContext";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import Loader from "../components/Loader";
+import { config } from "../../config";
+
+const BACKEND_API = config.services.backendService;
 
 const AboutUs = () => {
   const { isDarkMode } = useTheme();
@@ -13,7 +16,7 @@ const AboutUs = () => {
     queryFn: async () => {
       try {
         const cacheRes = await axios.get(
-          "https://notifyhub-backend-gral.onrender.com/api/analytics/cache-globalStats",
+          `${BACKEND_API}/api/analytics/cache-globalStats`,
           { withCredentials: true },
         );
 
@@ -25,7 +28,7 @@ const AboutUs = () => {
 
         if (error.response?.status === 404) {
           const dbRes = await axios.get(
-            "https://notifyhub-backend-gral.onrender.com/api/analytics/stats",
+            `${BACKEND_API}/api/analytics/stats`,
             { withCredentials: true },
           );
 
@@ -75,7 +78,7 @@ const AboutUs = () => {
           </p>
         </div>
 
-        {/* Dynamic Stats Row - Using Live Data */}
+        {/* Dynamic Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20">
           <StatCard
             icon={<Users size={24} />}
@@ -85,18 +88,19 @@ const AboutUs = () => {
             isDarkMode={isDarkMode}
           />
           <StatCard
-            icon={<Hash size={24} />}
-            label="Active Channels"
-            value={formatNumber(stats?.activeChannels)}
-            description="Unique data streams monitored"
-            isDarkMode={isDarkMode}
-          />
-          <StatCard
             icon={<Activity size={24} />}
             label="Total Alerts"
             value={formatNumber(stats?.totalNotifications)}
             description="Webhooks delivered to date"
             isDarkMode={isDarkMode}
+          />
+          <StatCard
+            icon={<Globe size={24} />}
+            label="Global Regions"
+            value="12+"
+            description="Low-latency delivery nodes worldwide"
+            isDarkMode={isDarkMode}
+            isStatic
           />
         </div>
 
@@ -150,7 +154,7 @@ const AboutUs = () => {
 };
 
 // Refined Stat Card
-const StatCard = ({ icon, label, value, description, isDarkMode }) => (
+const StatCard = ({ icon, label, value, description, isDarkMode, isStatic }) => (
   <div
     className={`p-8 rounded-[32px] border transition-all hover:-translate-y-1 ${
       isDarkMode
@@ -159,7 +163,15 @@ const StatCard = ({ icon, label, value, description, isDarkMode }) => (
     }`}
   >
     <div
-      className={`w-14 h-14 rounded-2xl mb-6 flex items-center justify-center ${isDarkMode ? "bg-slate-800 text-blue-400" : "bg-blue-50 text-blue-600"}`}
+      className={`w-14 h-14 rounded-2xl mb-6 flex items-center justify-center ${
+        isStatic
+          ? isDarkMode
+            ? "bg-slate-800 text-emerald-400"
+            : "bg-emerald-50 text-emerald-600"
+          : isDarkMode
+            ? "bg-slate-800 text-blue-400"
+            : "bg-blue-50 text-blue-600"
+      }`}
     >
       {icon}
     </div>
@@ -169,7 +181,15 @@ const StatCard = ({ icon, label, value, description, isDarkMode }) => (
       {value}
     </p>
     <p
-      className={`text-sm font-bold uppercase tracking-widest mb-2 ${isDarkMode ? "text-blue-400" : "text-blue-600"}`}
+      className={`text-sm font-bold uppercase tracking-widest mb-2 ${
+        isStatic
+          ? isDarkMode
+            ? "text-emerald-400"
+            : "text-emerald-600"
+          : isDarkMode
+            ? "text-blue-400"
+            : "text-blue-600"
+      }`}
     >
       {label}
     </p>

@@ -74,6 +74,8 @@ export const sendNotification = async (notification) => {
       });
     }
 
+    await client.HINCRBY(`GStats`, 'totalNotifications', 1);
+
     const stats = await getNotificationStats(appId);
     const projectStats = await getProjectStat(appId);
 

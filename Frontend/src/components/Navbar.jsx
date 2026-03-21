@@ -23,6 +23,9 @@ import { useClerk } from "@clerk/clerk-react";
 import { useSelector, useDispatch } from "react-redux";
 import { clearUser } from "../Store/userSlice";
 import toast from "react-hot-toast";
+import { config } from "../../config";
+
+const BACKEND_API = config.services.backendService;
 
 const Navbar = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -79,7 +82,7 @@ const Navbar = () => {
       setIsRedirecting(true);
       setIsProfileOpen(false);
 
-      await fetch("https://notifyhub-backend-gral.onrender.com/api/users/logout", {
+      await fetch(`${BACKEND_API}/api/users/logout`, {
         method: "GET",
         credentials: "include",
       });

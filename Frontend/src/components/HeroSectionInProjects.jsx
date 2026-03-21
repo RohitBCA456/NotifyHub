@@ -16,6 +16,9 @@ import Loader from "../components/Loader";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { config } from "../../config";
+
+const BACKEND_API = config.services.backendService;
 
 const HeroSectionProjects = () => {
   const { isDarkMode } = useTheme();
@@ -67,7 +70,7 @@ const HeroSectionProjects = () => {
     queryKey: ["projects"],
     queryFn: async () => {
       const res = await axios.get(
-        "https://notifyhub-backend-gral.onrender.com/api/users/fetch-projects",
+        `${BACKEND_API}/api/users/fetch-projects`,
         { withCredentials: true },
       );
       return res.data.apps;
@@ -77,7 +80,7 @@ const HeroSectionProjects = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (projectId) => {
-      await axios.delete("https://notifyhub-backend-gral.onrender.com/api/users/delete-project", {
+      await axios.delete(`${BACKEND_API}/api/users/delete-project`, {
         data: { projectId },
         withCredentials: true,
       });

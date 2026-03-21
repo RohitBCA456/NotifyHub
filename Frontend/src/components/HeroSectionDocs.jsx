@@ -1,5 +1,5 @@
 import React from "react";
-import { Copy, Terminal, Key, Rocket, Code2, CheckCircle2 } from "lucide-react";
+import { Copy, Terminal, Key, Rocket, CheckCircle2 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import toast from "react-hot-toast";
 
@@ -11,13 +11,19 @@ const HeroSectionDocs = () => {
     toast.success("Copied to clipboard!");
   };
 
-  const codeSnippet = `curl -X POST https://api.notifyhub.io/v1/send \\
+  // Updated to match your createNotification controller logic
+  const codeSnippet = `curl -X POST https://notifyhub-backend-gral.onrender.com/api/notifications \\
   -H "Content-Type: application/json" \\
   -H "x-api-key: YOUR_API_KEY" \\
   -d '{
     "appId": "your_app_id",
-    "message": "Hello from Webhook!",
-    "channel": "email"
+    "channels": ["email", "sms"],
+    "targets": {
+      "email": "user@example.com",
+      "sms": "+1234567890"
+    },
+    "subject": "Welcome to NotifyHub",
+    "message": "Your integration is working perfectly!"
   }'`;
 
   return (
@@ -53,15 +59,17 @@ const HeroSectionDocs = () => {
             </div>
             <div className="mb-4">
               <h3
-                className={`text-xl font-bold mb-2 flex items-center gap-2 ${isDarkMode ? "text-white" : "text-slate-900"}`}
+                className={`text-xl font-bold mb-2 flex items-center gap-2 ${
+                  isDarkMode ? "text-white" : "text-slate-900"
+                }`}
               >
                 <Rocket size={20} className="text-blue-500" /> Create an
                 Application
               </h3>
               <p>
-                Navigate to the <strong>Projects</strong> and click on "Create
-                New Project". This will generate a unique <code>appId</code> for
-                your specific workspace.
+                Navigate to <strong>Projects</strong> and click "Create
+                New Project". This generates the <code>appId</code> required to
+                route your notifications.
               </p>
             </div>
           </section>
@@ -73,15 +81,15 @@ const HeroSectionDocs = () => {
             </div>
             <div className="mb-4">
               <h3
-                className={`text-xl font-bold mb-2 flex items-center gap-2 ${isDarkMode ? "text-white" : "text-slate-900"}`}
+                className={`text-xl font-bold mb-2 flex items-center gap-2 ${
+                  isDarkMode ? "text-white" : "text-slate-900"
+                }`}
               >
-                <Key size={20} className="text-amber-500" /> Get your API Key
+                <Key size={20} className="text-amber-500" /> Secure your API Key
               </h3>
               <p>
-                Once your project is created, your <strong>API Key</strong> is
-                generated immediately. You can also find it later by clicking
-                the <strong>three dots (⋮)</strong>. This key must be
-                included in the <code>x-api-key</code> header for every request.
+                Copy your <strong>API Key</strong> from the project dashboard. 
+                This must be passed in the <code>x-api-key</code> header.
               </p>
               <div
                 className={`mt-4 p-3 rounded-xl border flex items-center justify-between font-mono text-sm ${
@@ -112,14 +120,15 @@ const HeroSectionDocs = () => {
             </div>
             <div className="mb-6">
               <h3
-                className={`text-xl font-bold mb-2 flex items-center gap-2 ${isDarkMode ? "text-white" : "text-slate-900"}`}
+                className={`text-xl font-bold mb-2 flex items-center gap-2 ${
+                  isDarkMode ? "text-white" : "text-slate-900"
+                }`}
               >
-                <Terminal size={20} className="text-emerald-500" /> Send your
-                first Webhook
+                <Terminal size={20} className="text-emerald-500" /> Trigger a Notification
               </h3>
               <p>
-                Use the following POST request to send data. Replace the headers
-                with your credentials.
+                Send a POST request to our API. You can target multiple channels 
+                (email, sms, push) in a single call.
               </p>
             </div>
 
@@ -166,13 +175,15 @@ const HeroSectionDocs = () => {
             <CheckCircle2 className="text-emerald-500 shrink-0" size={24} />
             <div>
               <p
-                className={`text-sm font-bold ${isDarkMode ? "text-emerald-400" : "text-emerald-800"}`}
+                className={`text-sm font-bold ${
+                  isDarkMode ? "text-emerald-400" : "text-emerald-800"
+                }`}
               >
-                Verification Tip
+                Multi-Channel Support
               </p>
               <p className="text-xs text-emerald-600/80">
-                You can monitor the status of your requests in the "Inbox" tab
-                in real-time.
+                The <code>targets</code> object maps channel names to their 
+                respective destinations (e.g., email addresses or phone numbers).
               </p>
             </div>
           </div>

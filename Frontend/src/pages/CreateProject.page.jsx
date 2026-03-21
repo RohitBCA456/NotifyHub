@@ -17,6 +17,10 @@ import axios from "axios";
 import toast from "react-hot-toast";
 // 1. Import TanStack Query hooks
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { config } from "../../config";
+
+
+let BACKEND_API = config.services.backendService;
 
 const CreateProjectPage = () => {
   const { isDarkMode } = useTheme();
@@ -43,7 +47,7 @@ const CreateProjectPage = () => {
   const createProjectMutation = useMutation({
     mutationFn: async (payload) => {
       const response = await axios.post(
-        "https://notifyhub-backend-gral.onrender.com/api/users/create-app",
+        `${BACKEND_API}/api/users/create-app`,
         payload,
         { withCredentials: true },
       );
