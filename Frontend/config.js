@@ -1,10 +1,10 @@
-const isProduction = process.env.NODE_ENV === "production";
+const isProduction = process.env.VITE_NODE_ENV === "production";
 
 export const config = {
   isProduction,
   services: {
     backendService: isProduction 
-      ? process.env.BACKEND_URL 
+      ? import.meta.env.VITE_BACKEND_URL 
       : "http://localhost:3000"
   },
   socials: {
