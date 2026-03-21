@@ -122,10 +122,10 @@ const ViewProjectPage = () => {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
+        {/* Updated Header Section */}
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-12">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
               <h1
                 className={`text-4xl font-black tracking-tight ${
                   isDarkMode ? "text-white" : "text-slate-900"
@@ -144,14 +144,34 @@ const ViewProjectPage = () => {
                 Active
               </div>
             </div>
-            <p className="text-sm opacity-60">
-              Real-time monitoring for your webhook infrastructure.
+
+            {/* New App ID Section */}
+            <div className="flex items-center gap-2 group">
+              <span
+                className={`text-[11px] font-bold uppercase tracking-tighter opacity-50`}
+              >
+                App ID:
+              </span>
+              <code
+                className={`px-2 py-0.5 rounded-md text-xs font-mono border transition-colors ${
+                  isDarkMode
+                    ? "bg-slate-900 border-slate-800 text-blue-400 group-hover:border-blue-500/50"
+                    : "bg-blue-50 border-blue-100 text-blue-600 group-hover:border-blue-300"
+                }`}
+              >
+                {projectId}
+              </code>
+            </div>
+
+            <p className="text-sm opacity-60 max-w-md leading-relaxed">
+              Real-time monitoring for your webhook infrastructure. View live
+              metrics and delivery performance for this specific application.
             </p>
           </div>
 
           <button
             onClick={handleUpdatePreference}
-            className="flex items-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl shadow-xl shadow-blue-500/25 transition-all active:scale-95"
+            className="flex items-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl shadow-xl shadow-blue-500/25 transition-all active:scale-95 whitespace-nowrap"
           >
             <Zap size={18} /> Update Preferences
           </button>
