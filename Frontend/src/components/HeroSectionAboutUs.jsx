@@ -20,21 +20,24 @@ const AboutUs = () => {
           { withCredentials: true },
         );
 
-        console.log("cache hit");
+        if (cacheRes.data && Object.keys(cacheRes.data).length > 0) {
+          console.log("Cache Hit");
+          return cacheRes.data;
+        }
 
-        return cacheRes.data;
+        throw { response: { status: 404 } };
       } catch (error) {
-        console.log("cache Miss");
-
         if (error.response?.status === 404) {
-          const dbRes = await axios.get(
-            `${BACKEND_API}/api/analytics/stats`,
-            { withCredentials: true },
-          );
+          console.log("Cache Miss - Fetching from DB");
+
+          const dbRes = await axios.get(`${BACKEND_API}/api/analytics/stats`, {
+            withCredentials: true,
+          });
 
           return dbRes.data;
         }
 
+        console.error("Critical Error:", error);
         throw error;
       }
     },
@@ -154,7 +157,14 @@ const AboutUs = () => {
 };
 
 // Refined Stat Card
-const StatCard = ({ icon, label, value, description, isDarkMode, isStatic }) => (
+const StatCard = ({
+  icon,
+  label,
+  value,
+  description,
+  isDarkMode,
+  isStatic,
+}) => (
   <div
     className={`p-8 rounded-[32px] border transition-all hover:-translate-y-1 ${
       isDarkMode
