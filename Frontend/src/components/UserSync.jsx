@@ -15,7 +15,7 @@ const UserSync = () => {
   // Ensure your UserSync useEffect looks like this:
   useEffect(() => {
     const syncUser = async () => {
-      if (user && sessionId) {
+      if (user && sessionId && !hasSynced.current) {
         try {
           const token = await getToken();
           const userData = {
@@ -27,66 +27,65 @@ const UserSync = () => {
 
           const userId = localStorage.getItem("userId");
 
+          // --- STEP 1: CACHE CHECK ---
           if (userId) {
-            const cacheResponse = await fetch(
+            const cacheRes = await fetch(
               `${BACKEND_API}/api/users/cache-profile`,
               {
                 method: "POST",
-                credentials: "include",
                 headers: {
                   "Content-Type": "application/json",
                   Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({ userId }),
+                credentials: "include",
               },
             );
 
-            if (cacheResponse.ok) {
-              console.log("Cache Hit");
-              const data = await cacheResponse.json();
-
-              if (data && data.user) {
+            // Only parse if it's a 200 OK and IS JSON
+            if (
+              cacheRes.ok &&
+              cacheRes.headers.get("content-type")?.includes("application/json")
+            ) {
+              const data = await cacheRes.json();
+              if (data?.user) {
                 dispatch(setUser(data.user));
-                console.log("Data dispatched to redux by cache");
-                return;
-              } else {
-                console.error("Data not available");
+                hasSynced.current = true;
+                return; // EXIT: We have data, no need to call save-credentials
               }
-              hasSynced.current = true;
             }
           }
 
+          // --- STEP 2: DB SYNC (If cache missed or didn't exist) ---
           const response = await fetch(
             `${BACKEND_API}/api/users/save-credentials`,
             {
               method: "POST",
-              credentials: "include",
               headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
               },
               body: JSON.stringify(userData),
+              credentials: "include",
             },
           );
 
-          if (response.ok) {
-            const data = await response.json();
-
-            localStorage.setItem("userId", data?.user?._id);
-
-            if (data && data.user) {
-              dispatch(setUser(data.user));
-              console.log("Redux updated with serializable data");
-            } else {
-              console.error(
-                "Backend response ok, but 'user' object missing:",
-                data,
-              );
-            }
-            hasSynced.current = true;
-            console.log("Synced to Backend and Redux");
+          if (!response.ok) {
+            // This is where you catch the HTML error page instead of crashing
+            const errorText = await response.text();
+            console.error(
+              `Backend Error (${response.status}):`,
+              errorText.substring(0, 100),
+            );
+            return;
           }
-          console.log("User synced with backend");
+
+          const data = await response.json();
+          if (data?.user) {
+            localStorage.setItem("userId", data.user._id);
+            dispatch(setUser(data.user));
+            hasSynced.current = true;
+          }
         } catch (error) {
           console.error("Failed to sync user:", error);
         }
@@ -94,9 +93,9 @@ const UserSync = () => {
     };
 
     syncUser();
-  }, [user, sessionId, getToken]); // getToken added to dependencies
+  }, [user, sessionId, getToken]);
 
-  return null; // This component doesn't render anything
+  return null; 
 };
 
 export default UserSync;
