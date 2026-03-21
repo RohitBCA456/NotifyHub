@@ -1,4 +1,4 @@
-const isProduction = process.env.VITE_NODE_ENV === "production";
+const isProduction = import.meta.env.VITE_NODE_ENV === "production";
 
 export const config = {
   isProduction,
