@@ -17,7 +17,7 @@ export const sendEmail = async (to, subject, text, meta) => {
       html: `<strong>${text}</strong>`,
     });
 
-    emitUser(meta.userId, "notification_sent", {
+    emitUser(meta.appId, "notification_sent", {
       notificationId: meta._id,
       channel: "email",
       status: "sent",
@@ -32,6 +32,16 @@ export const sendEmail = async (to, subject, text, meta) => {
 
     console.log("Email sent successfully via Resend:", data.id);
   } catch (error) {
+
+     emitUser(meta.appId, "notification_sent", {
+      notificationId: meta._id,
+      channel: "email",
+      status: "failed",
+      message: text,
+      createdAt: new Date(),
+    });
+
+
     console.error("Failed to send email:", error.message);
     throw error;
   }

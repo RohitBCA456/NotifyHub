@@ -6,23 +6,37 @@ import { client } from "../config/redis.js";
 
 export const getGlobalStats = async (req, res) => {
   try {
-    const activeThreshold = new Date(Date.now() - 24 * 60 * 60 * 1000);
-
-    const [totalMembers, totalNotifications, activeChannelsCount] =
-      await Promise.all([User.countDocuments(), Notification.countDocuments()]);
-
     const key = `GStats`;
 
+    // 1. Try to get data from Redis
+    const cachedStats = await client.hGetAll(key);
+
+    if (
+      cachedStats &&
+      cachedStats.totalMembers &&
+      cachedStats.totalNotifications
+    ) {
+      return res.status(200).json({
+        totalMembers: parseInt(cachedStats.totalMembers),
+        totalNotifications: parseInt(cachedStats.totalNotifications),
+      });
+    }
+
+    // 2. Cache Miss: Fetch from DB
+    const [totalMembers, totalNotifications] = await Promise.all([
+      User.countDocuments(),
+      Notification.countDocuments({ status: "sent" }),
+    ]);
+
+    // 3. Update Redis so next request is fast
     await client.hSet(key, {
-      totalMembers: totalMembers || 0,
-      totalNotifications: totalNotifications || 0,
+      totalMembers: totalMembers.toString(),
+      totalNotifications: totalNotifications.toString(),
     });
 
-    await client.expire(key);
-
     return res.status(200).json({
-      totalMembers: totalMembers || 0,
-      totalNotifications: totalNotifications || 0,
+      totalMembers,
+      totalNotifications,
     });
   } catch (error) {
     console.error("Global Stats Error:", error);
@@ -73,26 +87,6 @@ export const getCacheProjectStats = async (req, res) => {
     const { projectId } = req.params;
 
     const key = `PStats:${projectId}`;
-
-    const data = await client.hGetAll(key);
-
-    if (!data || Object.keys(data).length === 0) {
-      return res.status(404).json({
-        message: "Cache miss",
-      });
-    }
-
-    return res.status(200).json(data);
-  } catch (error) {
-    return res.status(500).json({
-      message: "Internal Server Error",
-    });
-  }
-};
-
-export const getCacheGlobalStats = async (req, res) => {
-  try {
-    const key = `GStats`;
 
     const data = await client.hGetAll(key);
 

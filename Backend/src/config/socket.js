@@ -12,10 +12,14 @@ export function initSocket(server) {
   uiNamespace.on("connection", (socket) => {
     console.log("UI client connected:", socket.id);
 
-    socket.on("join", (userId) => {
-      const room = String(userId);
-      socket.join(room);
-      console.log(`User ${userId} joined room. Current rooms:`, socket.rooms);
+    socket.on("join", (projectId) => {
+      socket.join(projectId.toString());
+      console.log(`Socket ${socket.id} joined room: ${projectId}`);
+    });
+
+    socket.on("leave", (projectId) => {
+      socket.leave(projectId.toString());
+      console.log(`Socket ${socket.id} left ${projectId}`);
     });
 
     socket.on("disconnect", () => {
@@ -24,10 +28,10 @@ export function initSocket(server) {
   });
 }
 
-export function emitUser(userId, event, payload) {
-  io.of("/ui").to(userId).emit(event, payload);
+export function emitUser(projectId, event, payload) {
+  io.of("/ui").to(projectId).emit(event, payload);
 }
 
-export function emitStats(userId, event, payload) {
-  io.of("/ui").to(userId).emit(event, payload);
+export function emitStats(projectId, event, payload) {
+  io.of("/ui").to(projectId).emit(event, payload);
 }

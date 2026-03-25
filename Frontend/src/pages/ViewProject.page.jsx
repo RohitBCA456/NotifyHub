@@ -31,29 +31,32 @@ const ViewProjectPage = () => {
         `${BACKEND_API}/api/analytics/project-cache/${projectId}`,
       );
 
-      // STEP 2: If cache hit
       if (response.ok) {
         const data = await response.json();
 
-        console.log("Cache hit", data);
+        // Convert the raw string from Redis to a number and format it
+        const rawRate = parseFloat(data.successRate) || 0;
 
         setStats({
-          totalSent: data.totalSent,
-          successRate: data.successRate,
+          totalSent: data.totalSent || "0",
+          // Round to 1 decimal place and add the % sign back
+          successRate: `${rawRate.toFixed(1)}%`,
         });
-      }
-
-      // STEP 3: Cache miss → Fetch DB
-      else {
-        console.log("Cache miss → Fetching DB");
-
+      } else {
+        // STEP 3: Cache miss → Fetch DB
         response = await fetch(
           `${BACKEND_API}/api/analytics/project-stats/${projectId}`,
         );
-
         const data = await response.json();
 
-        setStats(data);
+        // Ensure DB data is also formatted if the backend doesn't do it
+        setStats({
+          totalSent: data.totalSent.toString(),
+          successRate:
+            typeof data.successRate === "number"
+              ? `${data.successRate.toFixed(1)}%`
+              : data.successRate,
+        });
       }
     } catch (err) {
       console.error(err);
@@ -62,25 +65,21 @@ const ViewProjectPage = () => {
     }
   }, [projectId]);
 
-  // 2. Socket Connection & Real-time Listeners
   useEffect(() => {
-    // Connect and Join the room for this specific project
     socket.connect();
+
+    // Join the new room
     socket.emit("join", projectId);
 
-    // Initial load
     fetchInitialStats();
 
-    // Listen for real-time updates
     socket.on("stats_updated", (newData) => {
-      console.log("Real-time update received:", newData);
+      // Check if the update belongs to THIS project
+      // (This is a safety check in case room leaving is slow)
+      if (newData.projectId && newData.projectId !== projectId) return;
 
-      // Accessing the specific notification stats from the nested object
       if (newData.projectStats) {
         const { total, successRate } = newData.projectStats;
-
-        console.log("Updating stats with:", { total, successRate });
-
         setStats({
           totalSent: total.toString(),
           successRate: `${successRate.toFixed(1)}%`,
@@ -88,10 +87,10 @@ const ViewProjectPage = () => {
       }
     });
 
-    // CLEANUP: Unsubscribe from event and leave room
     return () => {
       socket.off("stats_updated");
-      // Optional: socket.emit("leave", projectId);
+      // CRITICAL: Tell the backend to remove this socket from the project room
+      socket.emit("leave", projectId);
     };
   }, [projectId, fetchInitialStats]);
 
@@ -195,12 +194,12 @@ const ViewProjectPage = () => {
 
         {/* Graphs and Charts */}
         <div className="mb-10">
-          <AnalyticsChart isDarkMode={isDarkMode} currentUserId={userId} />
+          <AnalyticsChart isDarkMode={isDarkMode} />
         </div>
 
         {/* Real-time Activity Feed */}
         <div className="mb-10">
-          <NotificationFeed isDarkMode={isDarkMode} currentUserId={userId} />
+          <NotificationFeed isDarkMode={isDarkMode} projectId={projectId} />
         </div>
       </div>
     </div>

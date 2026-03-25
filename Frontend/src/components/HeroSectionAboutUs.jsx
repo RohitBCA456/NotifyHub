@@ -15,34 +15,16 @@ const AboutUs = () => {
     queryKey: ["globalStats"],
     queryFn: async () => {
       try {
-        const cacheRes = await axios.get(
-          `${BACKEND_API}/api/analytics/cache-globalStats`,
-          { withCredentials: true },
-        );
+        const dbRes = await axios.get(`${BACKEND_API}/api/analytics/stats`, {
+          withCredentials: true,
+        });
 
-        if (cacheRes.data && Object.keys(cacheRes.data).length > 0) {
-          console.log("Cache Hit");
-          return cacheRes.data;
-        }
-
-        throw { response: { status: 404 } };
+        return dbRes.data;
       } catch (error) {
-        if (error.response?.status === 404) {
-          console.log("Cache Miss - Fetching from DB");
-
-          const dbRes = await axios.get(`${BACKEND_API}/api/analytics/stats`, {
-            withCredentials: true,
-          });
-
-          return dbRes.data;
-        }
-
-        console.error("Critical Error:", error);
+        console.log(`error while fetching global stats:  ${error.message}`);
         throw error;
       }
     },
-
-    staleTime: 5 * 60 * 1000,
   });
 
   const formatNumber = (num) => {

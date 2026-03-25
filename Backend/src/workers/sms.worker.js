@@ -20,7 +20,7 @@ export const sendSMS = async (to, message, meta) => {
       to,
     });
 
-    emitUser(meta.userId, "notification_sent", {
+    emitUser(meta.appId, "notification_sent", {
       notificationId: meta._id,
       channel: "sms",
       status: "sent",
@@ -31,6 +31,15 @@ export const sendSMS = async (to, message, meta) => {
     console.log("SMS sent:", response.sid);
     return response;
   } catch (error) {
+
+    emitUser(meta.appId, "notification_sent", {
+      notificationId: meta._id,
+      channel: "sms",
+      status: "failed",
+      message: message,
+      createdAt: new Date(),
+    });
+
     console.error("Error sending SMS:", error.message);
     throw error;
   }

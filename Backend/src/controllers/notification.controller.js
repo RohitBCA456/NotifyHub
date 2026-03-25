@@ -49,12 +49,10 @@ export const createNotification = async (req, res) => {
       message: "Notifications queued successfully",
     });
   } catch (error) {
-    return res
-      .status(500)
-      .json({
-        message: "Failed to create notification.",
-        error: error.message,
-      });
+    return res.status(500).json({
+      message: "Failed to create notification.",
+      error: error.message,
+    });
   }
 };
 
@@ -74,7 +72,7 @@ export const sendNotification = async (notification) => {
       });
     }
 
-    await client.HINCRBY(`GStats`, 'totalNotifications', 1);
+    await client.hIncrBy(`GStats`, "totalNotifications", 1);
 
     const stats = await getNotificationStats(appId);
     const projectStats = await getProjectStat(appId);

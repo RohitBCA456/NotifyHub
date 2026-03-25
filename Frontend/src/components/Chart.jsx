@@ -9,7 +9,7 @@ const BACKEND_API = config.services.backendService;
 // Move socket outside or use a ref to prevent multiple connections on re-render
 const socket = io(`${BACKEND_API}/ui`, { autoConnect: false });
 
-const AnalyticsChart = ({ isDarkMode, currentUserId }) => {
+const AnalyticsChart = ({ isDarkMode }) => {
   const { projectId } = useParams();
   const [hoveredData, setHoveredData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -97,7 +97,7 @@ const AnalyticsChart = ({ isDarkMode, currentUserId }) => {
       socket.off("stats_updated");
       socket.disconnect();
     };
-  }, [currentUserId, fetchInitialData, transformData]);
+  }, [projectId, fetchInitialData, transformData]);
 
   if (isLoading) {
     return (
