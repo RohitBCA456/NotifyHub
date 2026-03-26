@@ -23,12 +23,12 @@ const limiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  // validate: { trustProxy: true },
+  validate: { trustProxy: true },
 });
 
 const app = express();
 
-// app.set("trust proxy", 1);
+app.set("trust proxy", 1);
 
 const server = http.createServer(app);
 
