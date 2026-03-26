@@ -2,6 +2,7 @@ import amqp from "amqplib";
 import { getDelayMs, isWithinQuietHours } from "../utils/quiteHours.helper.js";
 import { sendNotification } from "../controllers/notification.controller.js";
 import { Notification } from "../models/notification.model.js";
+import { config } from "../../urlConfig.js";
 
 let channel;
 let connection;
@@ -12,7 +13,7 @@ const DELAY_QUEUE = "notification_delay_queue";
 
 async function connect() {
   try {
-    const RABBIT_URL = process.env.RABBIT_URL;
+    const RABBIT_URL = config.services.RabbitMQ_URL;
     connection = await amqp.connect(RABBIT_URL);
     channel = await connection.createChannel();
 
