@@ -193,7 +193,7 @@ export const getCacheNotificationPreference = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       message: "Internal Server Error",
-      err: error,
+      err: error.message,
     });
   }
 };

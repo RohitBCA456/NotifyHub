@@ -48,6 +48,10 @@ export const getProjectStats = async (req, res) => {
   try {
     const { projectId } = req.params;
 
+    if (!projectId) {
+      return res.status(400).json({ message: "Project ID is required" });
+    }
+
     const stats = await getProjectStat(projectId);
 
     console.log("Project Stats:", stats);
@@ -73,6 +77,10 @@ export const getProjectStats = async (req, res) => {
 };
 
 export const getChartData = async (req, res) => {
+  if (!req.params.projectId) {
+    return res.status(400).json({ message: "Project ID is required" });
+  }
+
   try {
     const data = await getNotificationStats(req.params.projectId);
 
@@ -85,6 +93,12 @@ export const getChartData = async (req, res) => {
 export const getCacheProjectStats = async (req, res) => {
   try {
     const { projectId } = req.params;
+
+    if (!projectId) {
+      return res.status(400).json({
+        message: "Project ID is required",
+      });
+    }
 
     const key = `PStats:${projectId}`;
 

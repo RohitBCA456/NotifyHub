@@ -10,7 +10,7 @@ describe("Send Notification Controller", () => {
     subject: "testing",
     message: "Testing Send Notification Controller",
     userId: "45782390",
-    _id: "4587342",
+    _id: "65d62d98f1a2b3c4d5e6f7a8",
     appId: "3459868569402",
   };
 
@@ -19,7 +19,7 @@ describe("Send Notification Controller", () => {
     const statsMockFn = mock.fn(async () => [{ total: 10 }]);
     const projectStatsMokcFn = mock.fn(async () => [{ totalSent: 5, successRate: 50 }]);
     const emitStatsMock = mock.fn();
-    const redisMock = { hSet: mock.fn(async () => {}), expire: mock.fn(async () => {}) };
+    const redisMock = { hSet: mock.fn(async () => {}), expire: mock.fn(async () => {}), hIncrBy: mock.fn(async () => {}) };
 
     const { sendNotification } = await esmock("../../controllers/notification.controller.js", {
       "../../workers/email.worker.js": { sendEmail: sendEmailMockFn },
