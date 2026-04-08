@@ -1,284 +1,310 @@
+# 🔔 NotifyHub
 
-# NotifyHub
+A full-stack, real-time notification platform that delivers notifications to users via **email**, **SMS**, and **in-app alerts**. Built with a modern microservice-inspired architecture using a React frontend and a Node.js/Express backend, powered by RabbitMQ, Redis, Socket.IO, MongoDB, and Docker.
 
-NotifyHub is a real-time notification service designed for third-party applications. It allows apps to send notifications to their users via Email, SMS, and In-App (real-time) channels using a single unified backend. The system is built with scalability and extensibility in mind using event-driven architecture.
+---
 
-## 🚀 Live Demo
-**[View Live App](https://notifyhub-fh7h.onrender.com)** *(Note: Initial load may take 50s due to Render's free tier spin-up)*
+## 📋 Table of Contents
 
-## Features
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Architecture Overview](#architecture-overview)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Environment Variables](#environment-variables)
+  - [Running with Docker](#running-with-docker)
+  - [Running Locally](#running-locally)
+- [API Reference](#api-reference)
+- [Scripts](#scripts)
+- [Contributing](#contributing)
 
-- Multi-channel notifications: Support for Email (Resend), SMS (Twilio), and In-App (Socket.IO).
+---
 
-- Event-Driven Architecture: High-performance background processing using RabbitMQ.
+## ✨ Features
 
-- Dockerized Backend: Fully containerized backend service for consistent deployment and environment parity.
+- 📧 **Email Notifications** — Delivered via [Resend](https://resend.com/)
+- 📱 **SMS Notifications** — Delivered via [Twilio](https://www.twilio.com/)
+- ⚡ **Real-Time In-App Notifications** — Powered by Socket.IO
+- 🐇 **Message Queue** — RabbitMQ handles asynchronous notification delivery
+- 🗄️ **Caching** — Redis for session and data caching
+- 🔐 **Authentication** — Clerk-based auth on the frontend, JWT + bcrypt on the backend
+- 📊 **Analytics** — Notification delivery analytics dashboard
+- 🛡️ **Rate Limiting** — Express Rate Limit (100 requests per 15 minutes)
+- 🐳 **Dockerized** — Full Docker Compose setup for development
+- 🌐 **CORS Secured** — Configurable allowed origins
 
-- Real-time In-App Notifications: Instant delivery using Socket.IO namespaces.
+---
 
-- Third-party Integration: Secure app integration via unique API Keys.
+## 🛠️ Tech Stack
 
-## Tech Stack
+### Backend
+| Technology | Purpose |
+|---|---|
+| Node.js + Express 5 | REST API server |
+| MongoDB + Mongoose | Primary database |
+| RabbitMQ (amqplib) | Message queue for async notification dispatch |
+| Redis | Caching layer |
+| Socket.IO | Real-time WebSocket connections |
+| Resend | Email delivery |
+| Twilio | SMS delivery |
+| JWT + bcrypt | Authentication & password hashing |
+| Morgan | HTTP request logging |
+| express-rate-limit | API rate limiting |
 
-- Node.js
-- Express.js
-- MongoDB & Mongoose
-- RabbitMQ
-- Socket.IO
-- JWT Authentication
-- Twilio (SMS)
-- Resend (Email)
-- Docker
+### Frontend
+| Technology | Purpose |
+|---|---|
+| React 19 + Vite | UI framework & build tool |
+| React Router v7 | Client-side routing |
+| Redux Toolkit | Global state management |
+| TanStack Query | Server state & data fetching |
+| Clerk | User authentication |
+| Socket.IO Client | Real-time notifications |
+| Tailwind CSS v4 | Utility-first styling |
+| Axios | HTTP client |
+| React Hot Toast | Toast notifications |
+| Lucide React | Icon library |
 
-## Folder Structure
+---
+
+## 📁 Project Structure
 
 ```
-├── Backend
-│   ├── sampleData
-│   │   └── notifications.json
-│   ├── src
-│   │   ├── config
-│   │   │   ├── db.js
-│   │   │   ├── rabbitmq.js
-│   │   │   └── socket.js
-│   │   ├── controllers
-│   │   │   ├── analytics.controller.js
-│   │   │   ├── notification.controller.js
-│   │   │   └── user.controller.js
-│   │   ├── middleware
-│   │   │   ├── auth.middleware.js
-│   │   │   └── socket.middleware.js
-│   │   ├── models
-│   │   │   ├── app.model.js
-│   │   │   ├── notification.model.js
-│   │   │   ├── user.model.js
-│   │   │   └── userPreference.model.js
-│   │   ├── routes
-│   │   │   ├── analytics.routes.js
-│   │   │   ├── notification.routes.js
-│   │   │   └── user.routes.js
-│   │   ├── services
-│   │   │   ├── projectStats.service.js
-│   │   │   └── stats.service.js
-│   │   ├── utils
-│   │   │   ├── generateApiKey.js
-│   │   │   ├── quiteHours.helper.js
-│   │   │   └── rateLimiter.js
-│   │   └── workers
-│   │       ├── email.work.js
-│   │       ├── inapp.worker.js
-│   │       └── sms.worker.js
-│   ├── .dockerignore
-│   ├── .gitignore
-│   ├── app.js
-│   ├── dockerfile
-│   ├── index.js
-│   ├── package-lock.json
-│   └── package.json
-├── Frontend
-│   ├── public
-│   │   └── vite.svg
-│   ├── src
-│   │   ├── Store
-│   │   │   ├── store.js
-│   │   │   └── userSlice.js
-│   │   ├── assets
-│   │   │   └── react.svg
-│   │   ├── components
-│   │   │   ├── ApiKeyDisplay.jsx
-│   │   │   ├── AppWrapper.jsx
-│   │   │   ├── Chart.jsx
-│   │   │   ├── Footer.jsx
-│   │   │   ├── HeroSectionAboutUs.jsx
-│   │   │   ├── HeroSectionDashboard.jsx
-│   │   │   ├── HeroSectionDocs.jsx
-│   │   │   ├── HeroSectionInProjects.jsx
-│   │   │   ├── Loader.jsx
-│   │   │   ├── Navbar.jsx
-│   │   │   ├── Notifcation.jsx
-│   │   │   ├── RootLayout.jsx
-│   │   │   ├── ScrollTop.jsx
-│   │   │   ├── UserSync.jsx
-│   │   │   └── ViewApiKey.jsx
-│   │   ├── context
-│   │   │   └── ThemeContext.jsx
-│   │   ├── pages
-│   │   │   ├── CreateProject.page.jsx
-│   │   │   ├── NotificationPreference.page.jsx
-│   │   │   ├── Profile.page.jsx
-│   │   │   ├── Setting.page.jsx
-│   │   │   └── ViewProject.page.jsx
-│   │   ├── App.jsx
-│   │   ├── index.css
-│   │   └── main.jsx
-│   ├── .dockerignore
-│   ├── .gitignore
-│   ├── README.md
-│   ├── dockerfile
-│   ├── eslint.config.js
-│   ├── index.html
-│   ├── package-lock.json
-│   ├── package.json
-│   ├── tailwind.config.js
-│   └── vite.config.js
+NotifyHub/
+├── docker-compose.yml
 ├── .dockerignore
-├── README.md
-└── docker-compose.yml
+│
+├── Backend/
+│   ├── app.js                  # Express app setup (middleware, routes, socket init)
+│   ├── index.js                # Server entry point
+│   ├── urlConfig.js            # URL configuration
+│   ├── dockerfile
+│   ├── package.json
+│   ├── sampleData/             # Seed/sample data
+│   └── src/
+│       ├── config/
+│       │   ├── db.js           # MongoDB connection
+│       │   ├── rabbitmq.js     # RabbitMQ connection & queue setup
+│       │   ├── redis.js        # Redis client
+│       │   └── socket.js       # Socket.IO initialization
+│       ├── controllers/        # Route handler logic
+│       ├── middleware/         # Auth & other middleware
+│       ├── models/             # Mongoose schemas
+│       ├── routes/
+│       │   ├── user.routes.js
+│       │   ├── notification.routes.js
+│       │   └── analytics.routes.js
+│       ├── services/           # Business logic & third-party integrations
+│       ├── workers/            # RabbitMQ consumer workers
+│       ├── utils/              # Helper utilities
+│       └── test/               # Unit tests
+│
+└── Frontend/
+    ├── index.html
+    ├── vite.config.js
+    ├── config.js               # Frontend configuration
+    ├── tailwind.config.js
+    ├── dockerfile
+    ├── package.json
+    └── src/
+        ├── components/         # Reusable UI components
+        ├── pages/              # Route-level page components
+        └── ...
 ```
 
-## Installation
+---
 
-1. Clone the repository
-2. Install dependencies
-   ```bash
-   npm install
-   ```
-3. Create a `.env` file
+## 🏗️ Architecture Overview
 
 ```
-PORT=5000
-MONGO_URI=your_mongodb_uri
-JWT_SECRET=your_jwt_secret
-RABBITMQ_URL=your_rabbitmq_url
-TWILIO_SID=your_twilio_sid
-TWILIO_AUTH_TOKEN=your_twilio_auth_token
-TWILIO_PHONE=your_twilio_phone
+User → React Frontend (Vite + Clerk)
+         │
+         ├── REST API calls ──────► Express Backend (Port 3000)
+         │                              │
+         └── WebSocket (Socket.IO) ◄────┤
+                                        │
+                              ┌─────────┼──────────┐
+                              ▼         ▼           ▼
+                           MongoDB   Redis      RabbitMQ
+                                                    │
+                                          ┌─────────┴────────┐
+                                          ▼                   ▼
+                                    Email Worker         SMS Worker
+                                    (Resend)             (Twilio)
+```
+
+When a notification is triggered, the backend publishes a message to RabbitMQ. Consumer workers pick up the message and dispatch it through the appropriate channel (email, SMS, or in-app via Socket.IO).
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) v18+
+- [Docker](https://www.docker.com/) & Docker Compose
+- [MongoDB](https://www.mongodb.com/) instance (local or Atlas)
+- [Redis](https://redis.io/) instance
+- [RabbitMQ](https://www.rabbitmq.com/) instance
+- Accounts for [Resend](https://resend.com/) and [Twilio](https://www.twilio.com/)
+- A [Clerk](https://clerk.com/) application
+
+---
+
+### Environment Variables
+
+Create a `.env` file inside the `Backend/` directory:
+
+```env
+# Server
+PORT=3000
+NODE_ENV=development
+FRONTEND_URL=http://localhost:5173
+
+# MongoDB
+MONGO_URI=mongodb://localhost:27017/notifyhub
+
+# JWT
+JWT_SECRET=your_jwt_secret_here
+JWT_EXPIRES_IN=7d
+
+# Redis
+REDIS_URL=redis://localhost:6379
+
+# RabbitMQ
+RABBITMQ_URL=amqp://localhost
+
+# Resend (Email)
 RESEND_API_KEY=your_resend_api_key
-FRONTEND_URL=your_frontend_url
+
+# Twilio (SMS)
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_PHONE_NUMBER=+1234567890
 ```
 
-4. Start the server
+Create a `.env` file inside the `Frontend/` directory:
+
+```env
+VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+VITE_BACKEND_URL=http://localhost:3000
+```
+
+---
+
+### Running with Docker
+
+The easiest way to get started is using Docker Compose, which spins up both the frontend and backend together.
+
 ```bash
-npm run dev
+# Clone the repository
+git clone https://github.com/RohitBCA456/NotifyHub.git
+cd NotifyHub
+
+# Add your .env files to Backend/ and Frontend/
+
+# Build and start all services
+docker-compose up --build
 ```
 
-## API Routes
-
-### User Routes
-
-- POST `/save-credentials`
-- GET `/logout`
-- POST `/create-app`
-- GET  `/fetch-projects`
-- DELETE  `/delete-project`
-
-### Notification Routes
-
-- POST `/send-notification`
-- POST `/update-preferences`
-- GET  `/get-preferences/:appId`
-
-### Analytics Routes
-
-- GET  `/stats`
-- GET  `/project-stats/:projectId`
-- GET  `/chart-data/:projectId`
-
-## Models Overview
-
-### User
-- username
-- email
-- sessionId
-- webToken
-
-### App
-- name
-- userId
-- channel
-- apiKey
-
-### Notification
-- userId
-- appId
-- channel (email, sms, push)
-- to
-- subject
-- message
-- status
-
-### UserPreference
-- email, sms, inapp preferences
-- quiet hours configuration
-
-## In-App Notification Architecture
-
-- Uses Socket.IO namespace `/inapp`
-- Third-party apps connect using API Key and userId
-- Backend emits real-time notifications scoped by appId and userId
-- No webhook polling required
-
-## RabbitMQ Workflow
-
-1. Notification request received
-2. Notification saved in database
-3. Published to RabbitMQ queue
-4. Worker processes notification
-5. Notification sent via selected channel
-6. Status updated in database
-7. Real-time status pushed via Socket.IO
-
-## Using NotifyHub as a Third-Party
-
-1. Register and create an app
-2. Get generated API Key
-3. Use API Key to send notifications
-4. Connect to `/inapp` socket namespace for real-time notifications
-
-# Future Upgrades & Roadmap
-
-This document outlines the planned enhancements for **NotifyHub** to improve performance, reliability, and developer experience.
+| Service  | URL                   |
+|----------|-----------------------|
+| Backend  | http://localhost:3000 |
+| Frontend | http://localhost:5173 |
 
 ---
 
-## 1. Performance Optimization (Caching)
-**Goal:** Reduce database load and decrease dashboard latency.
+### Running Locally
 
-- **Redis Integration:** Implement Redis as a caching layer for frequently accessed data such as:
-    - User session data (webTokens).
-    - Project analytics and notification stats.
-    - User preferences (to avoid DB lookups on every notification trigger).
-- **Cache Invalidation Strategy:** Implement a TTL (Time-to-Live) and event-based invalidation logic to ensure data consistency between MongoDB and Redis.
+**Backend:**
 
+```bash
+cd Backend
+npm install
+npm run dev       # Development (nodemon)
+# or
+npm start         # Production
+```
 
+**Frontend:**
 
----
-
-## 2. DevOps & Engineering Excellence
-**Goal:** Automate the release cycle and ensure system stability.
-
-- **CI/CD Pipeline:** Set up **GitHub Actions** to automate the build and deployment process:
-    - **Continuous Integration (CI):** Run automated tests on every Pull Request.
-    - **Continuous Deployment (CD):** Automatically deploy the Dockerized image to Render/AWS upon successful merge to `main`.
-- **Automated Testing:**
-    - **Unit Tests:** Test core logic like `quietHours.helper.js` and `generateApiKey.js` using **Jest**.
-    - **Integration Tests:** Test API endpoints and RabbitMQ message flow using **Supertest**.
-- **Docker Compose for Prod:** Refine the orchestration to include a health-check system for the RabbitMQ and Redis containers.
-
-
+```bash
+cd Frontend
+npm install
+npm run dev       # Vite dev server
+```
 
 ---
 
-## 3. Documentation & Developer Experience
-**Goal:** Make it easier for third-party developers to adopt NotifyHub.
+## 📡 API Reference
 
-- **Swagger/OpenAPI UI:** Integrate Swagger to provide interactive API documentation directly at `/api-docs`.
-- **Demo Video:** Create a high-quality video walkthrough demonstrating:
-    - Setting up a new project.
-    - Integrating the API key into a third-party app.
-    - Real-time notification delivery via Socket.IO.
-- **Developer SDK:** Build a lieight NPM package (`notifyhub-node-sdk`) to simplify integration for Node.js developers.
+All API routes are prefixed with `/api`.
+
+### Users — `/api/users`
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/users/register` | Register a new user |
+| POST | `/api/users/login` | Login and receive JWT |
+| GET | `/api/users/profile` | Get current user profile |
+| PUT | `/api/users/profile` | Update user profile |
+
+### Notifications — `/api/notifications`
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/notifications/send` | Send a notification |
+| GET | `/api/notifications` | Get all notifications for a user |
+| PUT | `/api/notifications/:id/read` | Mark notification as read |
+| DELETE | `/api/notifications/:id` | Delete a notification |
+
+### Analytics — `/api/analytics`
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/analytics/summary` | Get notification delivery summary |
+| GET | `/api/analytics/by-channel` | Get stats broken down by channel |
+
+> **Note:** Most endpoints require a valid JWT token passed via a cookie or `Authorization` header.
 
 ---
 
-## Long-Term Vision
-- **Webhooks:** Allow third-party apps to receive status updates (delivered/failed) via webhook callbacks.
-- **Advanced Analytics:** Add a "Delivery Heatmap" to show peak notification times.
-- **Multi-Tenancy:** Enhanced support for large organizations managing multiple teams.
+## 📜 Scripts
+
+### Backend
+
+```bash
+npm start       # Run with node
+npm run dev     # Run with nodemon (hot-reload)
+npm test        # Run unit tests with Node's built-in test runner
+```
+
+### Frontend
+
+```bash
+npm run dev     # Start Vite development server
+npm run build   # Build for production
+npm run preview # Preview production build
+npm run lint    # Run ESLint
+```
 
 ---
-*If you have suggestions for NotifyHub, feel free to open an issue or submit a PR!*
 
-## Contribution
+## 🤝 Contributing
 
-Contributions are welcome. Please fork the repository and submit a pull request with clear description.
+Contributions are welcome! To get started:
+
+1. Fork the repository
+2. Create a new branch: `git checkout -b feature/your-feature-name`
+3. Make your changes and commit: `git commit -m "feat: add your feature"`
+4. Push to your branch: `git push origin feature/your-feature-name`
+5. Open a Pull Request
+
+Please follow conventional commit messages and ensure all tests pass before submitting a PR.
+
+---
+
+## 📄 License
+
+This project is licensed under the **ISC License**.
