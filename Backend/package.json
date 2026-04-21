@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "node --test"
+    "test": "npm run test:integrated && npm run test:unit",
+    "test:integrated": "node --test \"src/test/integrated test/userControllerTesting/createApp.test.js\" \"src/test/integrated test/userControllerTesting/fetchProject.test.js\" \"src/test/integrated test/userControllerTesting/deleteProject.test.js\" \"src/test/integrated test/userControllerTesting/logoutUser.test.js\" \"src/test/integrated test/userControllerTesting/saveCredentials.test.js\" \"src/test/integrated test/userControllerTesting/getCacheProfile.test.js\" \"src/test/integrated test/notificationControllerTesting/createNotification.test.js\" \"src/test/integrated test/notificationControllerTesting/updateNotificationPreference.test.js\" \"src/test/integrated test/notificationControllerTesting/getNotificationPreference.test.js\" \"src/test/integrated test/notificationControllerTesting/getCacheNotificationPreference.test.js\" \"src/test/integrated test/analyticsControllerTesting/getGlobalStats.test.js\" \"src/test/integrated test/analyticsControllerTesting/getProjectStats.test.js\" \"src/test/integrated test/analyticsControllerTesting/getChartData.test.js\" \"src/test/integrated test/analyticsControllerTesting/getcacheProjectStats.test.js\"",
+    "test:unit": "node --test \"src/test/unit test/analyticsControllerTesting/getCacheProjectStats.test.js\" \"src/test/unit test/analyticsControllerTesting/getChartData.test.js\" \"src/test/unit test/analyticsControllerTesting/getGlobalStats.test.js\" \"src/test/unit test/analyticsControllerTesting/getProjectStats.test.js\" \"src/test/unit test/notificationControllerTesting/createNotification.test.js\" \"src/test/unit test/notificationControllerTesting/getCacheNotificationPreference.test.js\" \"src/test/unit test/notificationControllerTesting/getNotificationPreference.test.js\" \"src/test/unit test/notificationControllerTesting/sendNotification.test.js\" \"src/test/unit test/notificationControllerTesting/updateNotificationPreference.test.js\" \"src/test/unit test/userControllerTesting/createApp.test.js\" \"src/test/unit test/userControllerTesting/deleteProject.test.js\" \"src/test/unit test/userControllerTesting/fetchProjects.test.js\" \"src/test/unit test/userControllerTesting/getCacheProfile.test.js\" \"src/test/unit test/userControllerTesting/logoutUser.test.js\" \"src/test/unit test/userControllerTesting/saveCredentials.test.js\""
   },
   "keywords": [],
   "author": "",
@@ -27,10 +29,12 @@
     "nodemon": "^3.1.11",
     "redis": "^5.10.0",
     "resend": "^6.9.1",
+    "sinon": "^21.0.3",
     "socket.io": "^4.8.3",
     "twilio": "^5.11.2"
   },
   "devDependencies": {
-    "esmock": "^2.7.3"
+    "esmock": "^2.7.3",
+    "supertest": "^7.2.2"
   }
 }

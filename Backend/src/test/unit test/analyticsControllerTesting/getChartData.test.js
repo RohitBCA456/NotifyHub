@@ -1,6 +1,6 @@
 import { it, describe, mock } from "node:test";
 import assert from "assert";
-import { getChartData } from "../../controllers/analytics.controller.js";
+import { getChartData } from "../../../controllers/analytics.controller.js";
 import esmock from "esmock";
 
 function createRes() {
@@ -68,9 +68,9 @@ describe("Get Chart Data Controller", () => {
     });
 
     const { getChartData } = await esmock(
-      "../../controllers/analytics.controller.js",
+      "../../../controllers/analytics.controller.js",
       {
-        "../../services/stats.service.js": {
+        "../../../services/stats.service.js": {
           getNotificationStats: getNotificationStatsMock,
         },
       },
@@ -96,9 +96,9 @@ describe("Get Chart Data Controller", () => {
     });
 
     const { getChartData } = await esmock(
-      "../../controllers/analytics.controller.js",
+      "../../../controllers/analytics.controller.js",
       {
-        "../../services/stats.service.js": {
+        "../../../services/stats.service.js": {
           getNotificationStats: getNotificationStatsMock,
         },
       },

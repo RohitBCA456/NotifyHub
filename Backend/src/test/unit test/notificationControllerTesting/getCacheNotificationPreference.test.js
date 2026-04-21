@@ -1,7 +1,10 @@
 import { it, describe, mock } from "node:test";
 import assert from "assert";
 import esmock from "esmock";
-import { getCacheNotificationPreference } from "../../controllers/notification.controller.js";
+import { getCacheNotificationPreference } from "../../../controllers/notification.controller.js";
+import mongoose from "mongoose";
+
+const APP_ID = new mongoose.Types.ObjectId().toString();
 
 function createRes() {
   let statusCode = null;
@@ -43,7 +46,7 @@ describe("Get Cache Notification Preference Controller", () => {
   it("should return 404 if preference is not found on cache", async () => {
     const req = {
       body: {
-        appId: "appID_123",
+        appId: APP_ID,
       },
     };
 
@@ -52,9 +55,9 @@ describe("Get Cache Notification Preference Controller", () => {
     const redisMock = { hGetAll: mock.fn(async () => null) };
 
     const { getCacheNotificationPreference } = await esmock(
-      "../../controllers/notification.controller.js",
+      "../../../controllers/notification.controller.js",
       {
-        "../../config/redis.js": { client: redisMock },
+        "../../../config/redis.js": { client: redisMock },
       },
     );
 
@@ -69,7 +72,7 @@ describe("Get Cache Notification Preference Controller", () => {
   it("should return 500 if there is an error during cache retrieval", async () => {
     const req = {
       body: {
-        appId: "appID_123,",
+        appId: APP_ID,
       },
     };
 
@@ -82,9 +85,9 @@ describe("Get Cache Notification Preference Controller", () => {
     };
 
     const { getCacheNotificationPreference } = await esmock(
-      "../../controllers/notification.controller.js",
+      "../../../controllers/notification.controller.js",
       {
-        "../../config/redis.js": { client: redisMock },
+        "../../../config/redis.js": { client: redisMock },
       },
     );
 
@@ -100,7 +103,7 @@ describe("Get Cache Notification Preference Controller", () => {
   it("should return 200 with preference data if found on cache", async () => {
     const req = {
       body: {
-        appId: "appID_123",
+        appId: APP_ID,
       },
     };
 
@@ -111,9 +114,9 @@ describe("Get Cache Notification Preference Controller", () => {
     };
 
     const { getCacheNotificationPreference } = await esmock(
-      "../../controllers/notification.controller.js",
+      "../../../controllers/notification.controller.js",
       {
-        "../../config/redis.js": { client: redisMock },
+        "../../../config/redis.js": { client: redisMock },
       },
     );
 

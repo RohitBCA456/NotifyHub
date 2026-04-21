@@ -1,10 +1,10 @@
 import { describe, it, mock } from "node:test";
 import assert from "assert";
 import esmock from "esmock";
-import { createNotification } from "../../controllers/notification.controller.js";
-const { App } = await import("../../models/app.model.js");
-const { UserPreference } = await import("../../models/userPreference.model.js");
-const { Notification } = await import("../../models/notification.model.js");
+import { createNotification } from "../../../controllers/notification.controller.js";
+const { App } = await import("../../../models/app.model.js");
+const { UserPreference } = await import("../../../models/userPreference.model.js");
+const { Notification } = await import("../../../models/notification.model.js");
 
 function createRes() {
   let statusCode = null;
@@ -29,9 +29,9 @@ describe("Create Notification Controller", () => {
     const publishMockFn = mock.fn(async () => Promise.resolve(true));
 
     const { createNotification } = await esmock(
-      "../../controllers/notification.controller.js",
+      "../../../controllers/notification.controller.js",
       {
-        "../../config/rabbitmq.js": {
+        "../../../config/rabbitmq.js": {
           publishToQueue: publishMockFn,
           connect: async () => {},
         },

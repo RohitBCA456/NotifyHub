@@ -1,9 +1,9 @@
 import { describe, it, mock } from "node:test";
 import assert from "assert";
-import { deleteProject } from "../../controllers/user.controller.js";
-import { App } from "../../models/app.model.js";
-import { Notification } from "../../models/notification.model.js";
-import { UserPreference } from "../../models/userPreference.model.js";
+import { deleteProject } from "../../../controllers/user.controller.js";
+import { App } from "../../../models/app.model.js";
+import { Notification } from "../../../models/notification.model.js";
+import { UserPreference } from "../../../models/userPreference.model.js";
 
 const VALID_ID = "65d62d98f1a2b3c4d5e6f7a8";
 

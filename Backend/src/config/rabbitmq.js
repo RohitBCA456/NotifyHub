@@ -122,4 +122,21 @@ async function publishToQueue(queueName, message) {
 //   }
 // }
 
+export async function closeRabbitMQ() {
+  try {
+    isConsuming = false;
+    if (channel) {
+      await channel.close();
+      channel = null;
+    }
+    if (connection) {
+      connection.removeAllListeners("close");
+      await connection.close();
+      connection = null;
+    }
+  } catch (error) {
+    console.error("Error closing RabbitMQ:", error.message);
+  }
+}
+
 export { connect, publishToQueue };

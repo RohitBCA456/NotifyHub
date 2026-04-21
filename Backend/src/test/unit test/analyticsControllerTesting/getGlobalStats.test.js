@@ -1,9 +1,9 @@
 import { it, describe, mock } from "node:test";
 import assert from "assert";
 import esmock from "esmock";
-import { User } from "../../models/user.model.js";
-import { Notification } from "../../models/notification.model.js";
-import { getGlobalStats } from "../../controllers/analytics.controller.js";
+import { User } from "../../../models/user.model.js";
+import { Notification } from "../../../models/notification.model.js";
+import { getGlobalStats } from "../../../controllers/analytics.controller.js";
 
 function createRes() {
   let statusCode = null;
@@ -35,9 +35,9 @@ describe("Analytics Controller", () => {
     };
 
     const { getGlobalStats } = await esmock(
-      "../../controllers/analytics.controller.js",
+      "../../../controllers/analytics.controller.js",
       {
-        "../../config/redis.js": { client: redisMock },
+        "../../../config/redis.js": { client: redisMock },
       },
     );
 
@@ -62,9 +62,9 @@ describe("Analytics Controller", () => {
     };
 
     const { getGlobalStats } = await esmock(
-      "../../controllers/analytics.controller.js",
+      "../../../controllers/analytics.controller.js",
       {
-        "../../config/redis.js": { client: redisMock },
+        "../../../config/redis.js": { client: redisMock },
       },
     );
 
@@ -92,9 +92,9 @@ describe("Analytics Controller", () => {
     };
 
     const { getGlobalStats } = await esmock(
-      "../../controllers/analytics.controller.js",
+      "../../../controllers/analytics.controller.js",
       {
-        "../../config/redis.js": { client: redisMock },
+        "../../../config/redis.js": { client: redisMock },
       },
     );
 

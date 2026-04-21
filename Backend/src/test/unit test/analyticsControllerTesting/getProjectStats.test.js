@@ -1,6 +1,6 @@
 import { it, describe, mock } from "node:test";
 import assert from "assert";
-import { getProjectStats } from "../../controllers/analytics.controller.js";
+import { getProjectStats } from "../../../controllers/analytics.controller.js";
 import esmock from "esmock";
 
 function createRes() {
@@ -61,13 +61,13 @@ describe("Get project stats controller", () => {
     };
 
     const { getProjectStats } = await esmock(
-      "../../controllers/analytics.controller.js",
+      "../../../controllers/analytics.controller.js",
       {
-        "../../services/projectStats.service.js": {
+        "../../../services/projectStats.service.js": {
           getProjectStat: getProjectStatMock,
         },
 
-        "../../config/redis.js": { client: redisMock },
+        "../../../config/redis.js": { client: redisMock },
       },
     );
 
@@ -94,9 +94,9 @@ describe("Get project stats controller", () => {
     });
 
     const { getProjectStats } = await esmock(
-      "../../controllers/analytics.controller.js",
+      "../../../controllers/analytics.controller.js",
       {
-        "../../services/projectStats.service.js": {
+        "../../../services/projectStats.service.js": {
           getProjectStat: getProjectStatMock,
         },
       },

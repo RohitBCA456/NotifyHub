@@ -1,14 +1,10 @@
 import { describe, it, mock } from "node:test";
 import assert from "node:assert";
-import { saveCredentials, logoutUser, createApp, fetchProjects, deleteProject, getCacheProfile } from "../../controllers/user.controller.js";
-import { User } from "../../models/user.model.js";
-import { App } from "../../models/app.model.js";
-import { UserPreference } from "../../models/userPreference.model.js";
-import { Notification } from "../../models/notification.model.js";
-import { client } from "../../config/redis.js";
+import { saveCredentials } from "../../../controllers/user.controller.js";
+import { User } from "../../../models/user.model.js";
+import { client } from "../../../config/redis.js";
 
 const VALID_USER_ID = "65d62d98f1a2b3c4d5e6f7a8";
-const VALID_APP_ID = "75e73e09g2b3c4d5e6f7a9b1";
 
 function createRes() {
   let statusCode = null;
@@ -50,8 +46,9 @@ describe("saveCredentials Controller", () => {
       sessionId: "test#sessionId123$",
       webToken: null,
       generateWebToken: async () => "mocked_jwt_token",
-      save: async () => {},
     };
+
+    const updatedUser = { ...fakeUser, webToken: "mocked_jwt_token" };
 
     const req = {
       body: {
@@ -64,6 +61,11 @@ describe("saveCredentials Controller", () => {
 
     const findOneMock = mock.method(User, "findOne", async () => null);
     const createMock = mock.method(User, "create", async () => fakeUser);
+    const findByIdAndUpdateMock = mock.method(
+      User,
+      "findByIdAndUpdate",
+      async () => updatedUser,
+    );
     const redisHIncrByMock = mock.method(client, "hIncrBy", async () => 1);
     const redisHSetMock = mock.method(client, "hSet", async () => ({}));
     const redisExpireMock = mock.method(client, "expire", async () => ({}));
@@ -74,7 +76,8 @@ describe("saveCredentials Controller", () => {
     assert.strictEqual(res.getStatus(), 201);
     assert.strictEqual(findOneMock.mock.callCount(), 1);
     assert.strictEqual(createMock.mock.callCount(), 1);
-    assert.strictEqual(redisHIncrByMock.mock.callCount(), 1);  
+    assert.strictEqual(findByIdAndUpdateMock.mock.callCount(), 1);
+    assert.strictEqual(redisHIncrByMock.mock.callCount(), 1);
     assert.strictEqual(redisHSetMock.mock.callCount(), 1);
     assert.strictEqual(redisExpireMock.mock.callCount(), 1);
 
@@ -83,7 +86,10 @@ describe("saveCredentials Controller", () => {
     assert.strictEqual(cookies[0].name, "webToken");
     assert.strictEqual(cookies[0].value, "mocked_jwt_token");
 
-    assert.strictEqual(res.getJson().message, "User credentials saved successfully.");
+    assert.strictEqual(
+      res.getJson().message,
+      "User credentials saved successfully.",
+    );
 
     mock.restoreAll();
   });
@@ -94,10 +100,13 @@ describe("saveCredentials Controller", () => {
       username: "testUser",
       email: "test@example.com",
       sessionId: "OLD_SESSION",
-      webToken: null,
+      save: async () => {
+        return this;
+      },
       generateWebToken: async () => "new_token",
-      save: async () => {},
     };
+
+    const updatedUser = { ...existingUser, webToken: "new_token" };
 
     const req = {
       body: {
@@ -109,6 +118,7 @@ describe("saveCredentials Controller", () => {
     };
 
     mock.method(User, "findOne", async () => existingUser);
+    mock.method(User, "findByIdAndUpdate", async () => updatedUser);
     const redisHIncrByMock = mock.method(client, "hIncrBy", async () => 1);
     mock.method(client, "hSet", async () => ({}));
     mock.method(client, "expire", async () => ({}));
@@ -118,7 +128,7 @@ describe("saveCredentials Controller", () => {
 
     assert.strictEqual(existingUser.sessionId, "NEW_SESSION");
     assert.strictEqual(res.getStatus(), 201);
-    assert.strictEqual(redisHIncrByMock.mock.callCount(), 0); 
+    assert.strictEqual(redisHIncrByMock.mock.callCount(), 0);
 
     mock.restoreAll();
   });

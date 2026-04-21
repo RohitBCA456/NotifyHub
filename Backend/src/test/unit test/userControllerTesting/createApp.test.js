@@ -1,9 +1,9 @@
 import { describe, it, mock } from "node:test";
 import assert from "node:assert";
-import { createApp } from "../../controllers/user.controller.js";
-import { App } from "../../models/app.model.js";
-import { UserPreference } from "../../models/userPreference.model.js";
-import { client } from "../../config/redis.js";
+import { createApp } from "../../../controllers/user.controller.js";
+import { App } from "../../../models/app.model.js";
+import { UserPreference } from "../../../models/userPreference.model.js";
+import { client } from "../../../config/redis.js";
 
 const VALID_USER_ID = "65d62d98f1a2b3c4d5e6f7a8";
 

@@ -1,0 +1,120 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  unit-tests:
+    name: Unit Test
+    run-ons: ubuntu-latest
+
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
+      - name: Set Up Nodejs
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Unit Test
+        run: npm run test:unit
+        env:
+          NODE_ENV: test
+
+  integration-tests:
+    name: Integrated Test
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+      rabbitmq:
+        image: rabbitmq:3-management-alpine
+        ports:
+          - 5672:5672
+          - 15672:15672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
+      - name: set up Nodejs
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: install dependencies
+        run: npm ci
+
+      - name: run integrated test
+        run: npm run test:integrated
+        env:
+          NODE_ENV: test
+          MONGODB_URL: mongodb://localhost:27017/notifyhub
+          REDIS_URL: redis://localhost:6379
+          RABBITMQ_URL: amqp://localhost:5672
+
+  lint-and-audit:
+    name: Lint & Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
+      - name: setup Nodejs
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: install dependencies
+        run: npm ci
+
+      - name: run ESLint
+        run: npm run lint
+
+      - name: checkout for vulnearabilites
+        run: npm audit --audit-level=high
+
+  deploy:
+    name: deploy to render
+    runs-on: ubuntu-latest
+    needs: ["unit-tests", "integration-tests", "lint-and-audit"]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Trigger Render deploy hook
+        run: |
+          curl -s --fail -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" \
+            -o /dev/null -w "HTTP status: %{http_code}\n"
+
+      - name: Confirm deployment triggered
+        run: echo "Deploy hook triggered successfully. Render is now building."

@@ -1,7 +1,7 @@
 import { describe, it, mock } from "node:test";
 import assert from "assert";
 import esmock from "esmock";
-import { Notification } from "../../models/notification.model.js";
+import { Notification } from "../../../models/notification.model.js";
 
 describe("Send Notification Controller", () => {
   const fakeNotification = {
@@ -21,12 +21,12 @@ describe("Send Notification Controller", () => {
     const emitStatsMock = mock.fn();
     const redisMock = { hSet: mock.fn(async () => {}), expire: mock.fn(async () => {}), hIncrBy: mock.fn(async () => {}) };
 
-    const { sendNotification } = await esmock("../../controllers/notification.controller.js", {
-      "../../workers/email.worker.js": { sendEmail: sendEmailMockFn },
-      "../../services/stats.service.js": { getNotificationStats: statsMockFn },
-      "../../services/projectStats.service.js": { getProjectStat: projectStatsMokcFn },
-      "../../config/socket.js": { emitStats: emitStatsMock },
-      "../../config/redis.js": { client: redisMock }
+    const { sendNotification } = await esmock("../../../controllers/notification.controller.js", {
+      "../../../workers/email.worker.js": { sendEmail: sendEmailMockFn },
+      "../../../services/stats.service.js": { getNotificationStats: statsMockFn },
+      "../../../services/projectStats.service.js": { getProjectStat: projectStatsMokcFn },
+      "../../../config/socket.js": { emitStats: emitStatsMock },
+      "../../../config/redis.js": { client: redisMock }
     });
 
     await sendNotification(fakeNotification);
@@ -42,12 +42,12 @@ describe("Send Notification Controller", () => {
 
     const notificationStatusUpdateMock = mock.method(Notification, "findByIdAndUpdate", async () => ({}));
 
-    const { sendNotification } = await esmock("../../controllers/notification.controller.js", {
-      "../../workers/email.worker.js": { sendEmail: sendEmailErrorMock },
-      "../../services/stats.service.js": { getNotificationStats: mock.fn() },
-      "../../services/projectStats.service.js": { getProjectStat: mock.fn() },
-      "../../config/socket.js": { emitStats: mock.fn() },
-      "../../config/redis.js": { client: { hSet: mock.fn(), expire: mock.fn() } }
+    const { sendNotification } = await esmock("../../../controllers/notification.controller.js", {
+      "../../../workers/email.worker.js": { sendEmail: sendEmailErrorMock },
+      "../../../services/stats.service.js": { getNotificationStats: mock.fn() },
+      "../../../services/projectStats.service.js": { getProjectStat: mock.fn() },
+      "../../../config/socket.js": { emitStats: mock.fn() },
+      "../../../config/redis.js": { client: { hSet: mock.fn(), expire: mock.fn() } }
     });
 
     try {

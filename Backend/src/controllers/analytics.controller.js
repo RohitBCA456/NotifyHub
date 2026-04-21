@@ -3,6 +3,7 @@ import { Notification } from "../models/notification.model.js";
 import { getNotificationStats } from "../services/stats.service.js";
 import { getProjectStat } from "../services/projectStats.service.js";
 import { client } from "../config/redis.js";
+import mongoose from "mongoose";
 
 export const getGlobalStats = async (req, res) => {
   try {
@@ -48,7 +49,7 @@ export const getProjectStats = async (req, res) => {
   try {
     const { projectId } = req.params;
 
-    if (!projectId) {
+    if (!projectId || projectId === "undefined") {
       return res.status(400).json({ message: "Project ID is required" });
     }
 
@@ -77,7 +78,7 @@ export const getProjectStats = async (req, res) => {
 };
 
 export const getChartData = async (req, res) => {
-  if (!req.params.projectId) {
+  if (!req.params.projectId || req.params.projectId === "undefined") {
     return res.status(400).json({ message: "Project ID is required" });
   }
 
@@ -94,7 +95,7 @@ export const getCacheProjectStats = async (req, res) => {
   try {
     const { projectId } = req.params;
 
-    if (!projectId) {
+    if (!projectId || projectId === "undefined") {
       return res.status(400).json({
         message: "Project ID is required",
       });

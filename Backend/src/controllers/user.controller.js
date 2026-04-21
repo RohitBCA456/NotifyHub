@@ -16,31 +16,27 @@ export const saveCredentials = async (req, res) => {
         .json({ message: "Username, email, and sessionId are required." });
     }
 
-    let newUser = await User.findOne({ email });
+    let user = await User.findOne({ email });
 
-    if (newUser) {
-      newUser.sessionId = sessionId;
+    if (user) {
+      user.sessionId = sessionId;
+      await user.save();
     } else {
-      newUser = await User.create({ username, imageUrl, email, sessionId });
-
+      user = await User.create({ username, imageUrl, email, sessionId });
       await client.hIncrBy(`GStats`, "totalMembers", 1);
     }
 
-    const webToken = await newUser.generateWebToken();
+    const webToken = await user.generateWebToken();
 
-    newUser.webToken = webToken;
+    user = await User.findByIdAndUpdate(user._id, { webToken }, { new: true });
 
-    await newUser.save();
-
-    const key = `profile:${newUser._id}`;
-
+    const key = `profile:${user._id}`;
     await client.hSet(key, {
-      id: newUser._id.toString(),
-      username: newUser.username,
-      email: newUser.email,
-      imageUrl: newUser.imageUrl,
+      id: user._id.toString(),
+      username: user.username,
+      email: user.email,
+      imageUrl: user.imageUrl,
     });
-
     await client.expire(key, 86400);
 
     const options = {
@@ -53,7 +49,7 @@ export const saveCredentials = async (req, res) => {
     return res
       .cookie("webToken", webToken, options)
       .status(201)
-      .json({ message: "User credentials saved successfully.", user: newUser });
+      .json({ message: "User credentials saved successfully.", user });
   } catch (error) {
     return res
       .status(500)

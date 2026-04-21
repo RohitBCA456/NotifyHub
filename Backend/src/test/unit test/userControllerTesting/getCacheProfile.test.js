@@ -1,6 +1,6 @@
 import { describe, it, mock } from "node:test";
-import { getCacheProfile } from "../../controllers/user.controller.js";
-import { client } from "../../config/redis.js";
+import { getCacheProfile } from "../../../controllers/user.controller.js";
+import { client } from "../../../config/redis.js";
 import assert from "assert";
 
 const VALID_ID = "65d62d98f1a2b3c4d5e6f7a8";

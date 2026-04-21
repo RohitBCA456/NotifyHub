@@ -1,7 +1,10 @@
 import { it, describe, mock } from "node:test";
 import assert from "assert";
-import { getNotificationPreference } from "../../controllers/notification.controller.js";
-import { UserPreference } from "../../models/userPreference.model.js";
+import { getNotificationPreference } from "../../../controllers/notification.controller.js";
+import { UserPreference } from "../../../models/userPreference.model.js";
+import mongoose from "mongoose";
+
+const VALID_APPID = new mongoose.Types.ObjectId().toString();
 
 function createRes() {
   let statusCode = null;
@@ -44,7 +47,7 @@ describe("Get Notification Prefernce Controller", () => {
   it("should return 404 if preference is not found", async () => {
     const req = {
       params: {
-        appId: "nonexistentAppId",
+        appId: VALID_APPID,
       },
       userId: "user_123",
     };
@@ -68,7 +71,7 @@ describe("Get Notification Prefernce Controller", () => {
   it("should return 200 with preferences if found", async () => {
     const req = {
       params: {
-        appId: "appID_123",
+        appId: VALID_APPID,
       },
       userId: "user_123",
     };
@@ -76,7 +79,7 @@ describe("Get Notification Prefernce Controller", () => {
     const res = createRes();
 
     const mockData = {
-      appId: "appID_123",
+      appId: VALID_APPID,
       preferences: {
         email: true,
         sms: false,

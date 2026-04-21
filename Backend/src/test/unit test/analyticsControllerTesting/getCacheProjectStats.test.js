@@ -1,6 +1,6 @@
 import { it, describe, mock } from "node:test";
 import assert from "assert";
-import { getCacheProjectStats } from "../../controllers/analytics.controller.js";
+import { getCacheProjectStats } from "../../../controllers/analytics.controller.js";
 import esmock from "esmock";
 
 function createRes() {
@@ -62,9 +62,9 @@ describe("Get Project Cache Stats Controller", () => {
     };
 
     const { getCacheProjectStats } = await esmock(
-      "../../controllers/analytics.controller.js",
+      "../../../controllers/analytics.controller.js",
       {
-        "../../config/redis.js": { client: redisMock },
+        "../../../config/redis.js": { client: redisMock },
       },
     );
 
@@ -88,9 +88,9 @@ describe("Get Project Cache Stats Controller", () => {
     };
 
     const { getCacheProjectStats } = await esmock(
-      "../../controllers/analytics.controller.js",
+      "../../../controllers/analytics.controller.js",
       {
-        "../../config/redis.js": { client: redisMock },
+        "../../../config/redis.js": { client: redisMock },
       },
     );
 
@@ -116,10 +116,10 @@ describe("Get Project Cache Stats Controller", () => {
     };
 
     const { getCacheProjectStats } = await esmock(
-      "../../controllers/analytics.controller.js",
+      "../../../controllers/analytics.controller.js",
 
       {
-        "../../config/redis.js": { client: redisMock },
+        "../../../config/redis.js": { client: redisMock },
       },
     );
     await getCacheProjectStats(req, res);

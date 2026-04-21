@@ -5,8 +5,26 @@ const client = createClient({
   url: config.services.Redis_URL || "redis://localhost:6379",
 });
 
-client.on("error", (err) => console.log("Redis Client Error", err));
+client.on("error", (err) => console.error("Redis Client Error", err));
 
-client.on("connect", () => console.log("Connected to Redis"));
+export const connectRedis = async () => {
+  if (!client.isOpen) {
+    await client.connect();
+
+    console.log(`connected to redis`);
+  }
+};
+
+export const clearRedis = async () => {
+  if (client.isOpen) {
+    await client.flushDb();
+  }
+};
+
+export const closeRedis = async () => {
+  if (client.isOpen) {
+    await client.quit();
+  }
+};
 
 export { client };

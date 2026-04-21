@@ -1,8 +1,8 @@
 import { describe, it, mock } from "node:test";
 import esmock from "esmock";
 import assert from "assert";
-import { updateNotificationPreference } from "../../controllers/notification.controller.js";
-import { UserPreference } from "../../models/userPreference.model.js";
+import { updateNotificationPreference } from "../../../controllers/notification.controller.js";
+import { UserPreference } from "../../../models/userPreference.model.js";
 
 function createRes() {
   let statusCode = null;
@@ -76,9 +76,9 @@ describe("Update Notification Preference Controller", () => {
     };
 
     const { updateNotificationPreference } = await esmock(
-      "../../controllers/notification.controller.js",
+      "../../../controllers/notification.controller.js",
       {
-        "../../config/redis.js": { client: redisMock },
+        "../../../config/redis.js": { client: redisMock },
       },
     );
 
@@ -121,9 +121,9 @@ describe("Update Notification Preference Controller", () => {
     };
 
     const { updateNotificationPreference } = await esmock(
-      "../../controllers/notification.controller.js",
+      "../../../controllers/notification.controller.js",
       {
-        "../../config/redis.js": { client: redisMock },
+        "../../../config/redis.js": { client: redisMock },
       },
     );
 

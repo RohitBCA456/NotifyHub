@@ -7,8 +7,6 @@ import cookieParser from "cookie-parser";
 import http from "http";
 import { initSocket } from "./src/config/socket.js";
 import { analyticsRouter } from "./src/routes/analytics.routes.js";
-import { connect } from "./src/config/rabbitmq.js";
-import { client } from "./src/config/redis.js";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 
@@ -37,11 +35,7 @@ initSocket(server);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-
 app.use(morgan("dev"));
-
-connect();
-client.connect();
 
 app.use(
   cors({

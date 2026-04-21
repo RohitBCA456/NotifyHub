@@ -1,7 +1,7 @@
 import { describe, it, mock } from "node:test";
 import assert from "node:assert";
-import { logoutUser } from "../../controllers/user.controller.js";
-import { User } from "../../models/user.model.js";
+import { logoutUser } from "../../../controllers/user.controller.js";
+import { User } from "../../../models/user.model.js";
 
 const VALID_USER_ID = "65d62d98f1a2b3c4d5e6f7a8";
 

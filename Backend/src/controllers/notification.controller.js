@@ -9,6 +9,7 @@ import { emitInApp } from "../workers/inapp.worker.js";
 import { getNotificationStats } from "../services/stats.service.js";
 import { getProjectStat } from "../services/projectStats.service.js";
 import { client } from "../config/redis.js";
+import mongoose from "mongoose";
 
 export const createNotification = async (req, res) => {
   try {
@@ -141,7 +142,7 @@ export const getNotificationPreference = async (req, res) => {
   try {
     const { appId } = req.params;
 
-    if (!appId) {
+    if (!appId || !mongoose.Types.ObjectId.isValid(appId)) {
       return res.status(400).json({
         message: "AppId is required",
       });
@@ -149,7 +150,6 @@ export const getNotificationPreference = async (req, res) => {
 
     const preference = await UserPreference.findOne({
       appId,
-      userId: req.userId,
     });
 
     if (!preference) {
@@ -173,7 +173,7 @@ export const getCacheNotificationPreference = async (req, res) => {
   try {
     const { appId } = req.body;
 
-    if (!appId) {
+    if (!appId || !mongoose.Types.ObjectId.isValid(appId)) {
       return res.status(400).json({
         message: "appId is required",
       });
