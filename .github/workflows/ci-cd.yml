@@ -7,9 +7,7 @@ on:
     branches: ["main"]
 
 jobs:
-  # ─────────────────────────────────────────
-  # JOB 1 — Unit Tests
-  # ─────────────────────────────────────────
+
   unit-tests:
     name: Unit Test
     runs-on: ubuntu-latest
@@ -35,12 +33,7 @@ jobs:
         env:
           NODE_ENV: test
           RESEND_API_KEY: re_dummy_key_for_testing
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}       # ← fixes "secretOrPrivateKey must have a value"
-
-  # ─────────────────────────────────────────
-  # JOB 2 — Integration Tests
-  # ─────────────────────────────────────────
-  integration-tests:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}      
     name: Integration Test
     runs-on: ubuntu-latest
 
@@ -91,15 +84,12 @@ jobs:
         working-directory: Backend
         env:
           NODE_ENV: test
-          MONGODB_URL: mongodb://localhost:27017/notifyhub_ci   # ← isolated DB name avoids dirty state between runs
+          MONGODB_URL: mongodb://localhost:27017/notifyhub_ci   
           REDIS_URL: redis://localhost:6379
           RABBITMQ_URL: amqp://localhost:5672
           RESEND_API_KEY: re_dummy_key_for_testing
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}                 # ← fixes all "secretOrPrivateKey" failures
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}                 
 
-  # ─────────────────────────────────────────
-  # JOB 3 — Security Audit
-  # ─────────────────────────────────────────
   audit:
     name: Security Audit
     runs-on: ubuntu-latest
@@ -120,12 +110,9 @@ jobs:
         working-directory: Backend
 
       - name: Check for vulnerabilities
-        run: npm audit --audit-level=critical   # ← "critical" only; the remaining high CVEs are in resend/mailparser with no fix yet
+        run: npm audit --audit-level=critical  
         working-directory: Backend
 
-  # ─────────────────────────────────────────
-  # JOB 4 — Deploy to Render
-  # ─────────────────────────────────────────
   deploy:
     name: Deploy to Render
     runs-on: ubuntu-latest
