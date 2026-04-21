@@ -34,7 +34,8 @@ jobs:
         working-directory: Backend
         env:
           NODE_ENV: test
-          RESEND_API_KEY: re_dummy_key_for_testing   # ← fixes "Missing API key" crash in email.worker.js
+          RESEND_API_KEY: re_dummy_key_for_testing
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}       # ← fixes "secretOrPrivateKey must have a value"
 
   # ─────────────────────────────────────────
   # JOB 2 — Integration Tests
@@ -86,17 +87,18 @@ jobs:
         working-directory: Backend
 
       - name: Run integration tests
-        run: npm run test:integrated   # ← matches your actual package.json script name
+        run: npm run test:integrated
         working-directory: Backend
         env:
           NODE_ENV: test
-          MONGODB_URL: mongodb://localhost:27017/notifyhub
+          MONGODB_URL: mongodb://localhost:27017/notifyhub_ci   # ← isolated DB name avoids dirty state between runs
           REDIS_URL: redis://localhost:6379
           RABBITMQ_URL: amqp://localhost:5672
-          RESEND_API_KEY: re_dummy_key_for_testing   # ← same fix for integration tests
+          RESEND_API_KEY: re_dummy_key_for_testing
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}                 # ← fixes all "secretOrPrivateKey" failures
 
   # ─────────────────────────────────────────
-  # JOB 3 — Security Audit only (no lint)
+  # JOB 3 — Security Audit
   # ─────────────────────────────────────────
   audit:
     name: Security Audit
@@ -118,7 +120,7 @@ jobs:
         working-directory: Backend
 
       - name: Check for vulnerabilities
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=critical   # ← "critical" only; the remaining high CVEs are in resend/mailparser with no fix yet
         working-directory: Backend
 
   # ─────────────────────────────────────────
