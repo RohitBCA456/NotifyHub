@@ -71,7 +71,7 @@ describe("POST send-notification", () => {
     });
 
     const payLoad = {
-      appId: existingApp._id,
+      appId: existingApp._id.toString(),
       channels: ["email"],
       targets: { email: "rohit7120yadav@gmail.com" },
       subject: "test in process",
@@ -112,7 +112,7 @@ describe("POST send-notification", () => {
     });
 
     const payLoad = {
-      appId: existingApp._id,
+      appId: existingApp._id.toString(),
       channels: ["email"],
       targets: { email: "rohit7120yadav@gmail.com" },
       subject: "test in process",
@@ -158,7 +158,7 @@ describe("POST send-notification", () => {
     });
 
     const payLoad = {
-      appId: existingApp._id,
+      appId: existingApp._id.toString(),
       channels: ["email"],
       targets: { email: "rohit7120yadav@gmail.com" },
       subject: "test in process",
