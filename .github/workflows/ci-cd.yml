@@ -127,4 +127,4 @@ jobs:
             -o /dev/null -w "HTTP status: %{http_code}\n"
 
       - name: Confirm deployment triggered
-        run: echo "Deploy hook triggered successfully. Render is now building"
+        run: echo "Deploy hook triggered successfully. Render is now building."
