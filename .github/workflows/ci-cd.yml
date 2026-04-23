@@ -7,7 +7,6 @@ on:
     branches: ["main"]
 
 jobs:
-
   unit-tests:
     name: Unit Test
     runs-on: ubuntu-latest
@@ -33,7 +32,9 @@ jobs:
         env:
           NODE_ENV: test
           RESEND_API_KEY: re_dummy_key_for_testing
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}      
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+  integration tests:
     name: Integration Test
     runs-on: ubuntu-latest
 
@@ -84,11 +85,11 @@ jobs:
         working-directory: Backend
         env:
           NODE_ENV: test
-          MONGODB_URL: mongodb://localhost:27017/notifyhub_ci   
+          MONGODB_URL: mongodb://localhost:27017/notifyhub_ci
           REDIS_URL: redis://localhost:6379
           RABBITMQ_URL: amqp://localhost:5672
           RESEND_API_KEY: re_dummy_key_for_testing
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}                 
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
   audit:
     name: Security Audit
@@ -110,7 +111,7 @@ jobs:
         working-directory: Backend
 
       - name: Check for vulnerabilities
-        run: npm audit --audit-level=critical  
+        run: npm audit --audit-level=critical
         working-directory: Backend
 
   deploy:
