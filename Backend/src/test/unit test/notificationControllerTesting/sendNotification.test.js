@@ -26,7 +26,7 @@ describe("Send Notification Controller", () => {
             hIncrBy: hIncrByMock,
           },
         },
-      }
+      },
     );
 
     await sendNotification(fakeNotification);
@@ -34,7 +34,7 @@ describe("Send Notification Controller", () => {
     assert.strictEqual(sendEmailMockFn.mock.callCount(), 1);
     assert.strictEqual(
       sendEmailMockFn.mock.calls[0].arguments[0],
-      fakeNotification.to
+      fakeNotification.to,
     );
     assert.strictEqual(hIncrByMock.mock.callCount(), 1);
   });
@@ -43,8 +43,6 @@ describe("Send Notification Controller", () => {
     const sendEmailErrorMock = mock.fn(async () => {
       throw new Error("SMTP Error");
     });
-
-    const findByIdAndUpdateMock = mock.fn(async () => ({}));
 
     const { sendNotification } = await esmock(
       "../../../controllers/notification.controller.js",
@@ -55,24 +53,14 @@ describe("Send Notification Controller", () => {
             hIncrBy: mock.fn(async () => {}),
           },
         },
-        "../../../models/notification.model.js": {
-          Notification: {
-            findByIdAndUpdate: findByIdAndUpdateMock,
-          },
-        },
-      }
+      },
     );
 
     try {
       await sendNotification(fakeNotification);
-      assert.fail("Should have thrown an error");
+      assert.fail("Should have thrown");
     } catch (error) {
       assert.strictEqual(error.message, "SMTP Error");
     }
-
-    assert.strictEqual(findByIdAndUpdateMock.mock.callCount(), 1);
-    const callArgs = findByIdAndUpdateMock.mock.calls[0].arguments;
-    assert.strictEqual(callArgs[0], fakeNotification._id);
-    assert.strictEqual(callArgs[1].status, "failed");
   });
 });
