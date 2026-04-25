@@ -1,4 +1,4 @@
-import { test, describe, before, after, beforeEach } from "node:test";
+import { test, describe, before, after, beforeEach, afterEach } from "node:test";
 import { clearDB, closeDB, connectDB } from "../../../config/db.js";
 import { clearRedis, closeRedis, connectRedis } from "../../../config/redis.js";
 import { closeRabbitMQ, connect, getChannel } from "../../../config/rabbitmq.js";
@@ -16,12 +16,12 @@ import sinon from "sinon";
 
 dotenv.config();
 
-let sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const VALID_ID = new mongoose.Types.ObjectId().toString();
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const SECRET = process.env.JWT_SECRET;
 
 describe("POST send-notification", () => {
+  let realSendToQueue;
+
   before(async () => {
     await connectDB();
     await connectRedis();
@@ -36,6 +36,22 @@ describe("POST send-notification", () => {
   beforeEach(async () => {
     await clearDB();
     await clearRedis();
+
+    // Mock sendToQueue for EVERY test so no real messages ever get queued
+    const ch = getChannel();
+    realSendToQueue = ch.sendToQueue.bind(ch);
+    ch.sendToQueue = () => {
+      console.log("Mocked channel.sendToQueue — skipping RabbitMQ");
+      return true;
+    };
+  });
+
+  afterEach(async () => {
+    // Always restore sendToQueue after every test regardless of pass/fail
+    const ch = getChannel();
+    if (ch && realSendToQueue) {
+      ch.sendToQueue = realSendToQueue;
+    }
   });
 
   after(async () => {
@@ -46,6 +62,10 @@ describe("POST send-notification", () => {
   });
 
   test("should return 403 if invalid apiKey or appId", async () => {
+    // Fresh ID per test — no shared state
+    const VALID_ID = new mongoose.Types.ObjectId().toString();
+    const token = jwt.sign({ id: VALID_ID }, SECRET);
+
     const payLoad = {
       appId: new mongoose.Types.ObjectId().toString(),
       channels: ["sms", "email"],
@@ -53,8 +73,6 @@ describe("POST send-notification", () => {
       subject: "test in process",
       message: "test in process",
     };
-
-    const token = jwt.sign({ id: VALID_ID }, SECRET);
 
     const response = await request(app)
       .post("/api/notifications/send-notification")
@@ -67,6 +85,7 @@ describe("POST send-notification", () => {
   });
 
   test("should return 400 if user has not opt on of the channel", async () => {
+    const VALID_ID = new mongoose.Types.ObjectId().toString();
     const token = jwt.sign({ id: VALID_ID }, SECRET);
 
     const existingApp = await App.create({
@@ -86,10 +105,7 @@ describe("POST send-notification", () => {
     await UserPreference.create({
       appId: existingApp._id,
       userId: VALID_ID,
-      preferences: {
-        sms: true,
-        email: false,
-      },
+      preferences: { sms: true, email: false },
     });
 
     const response = await request(app)
@@ -97,8 +113,6 @@ describe("POST send-notification", () => {
       .set("x-api-key", existingApp?.apiKey)
       .set("Cookie", [`webToken=${token}`])
       .send(payLoad);
-
-    console.log(`response body: ${response.body}`);
 
     assert.strictEqual(response.status, 400);
     assert.strictEqual(
@@ -108,14 +122,7 @@ describe("POST send-notification", () => {
   });
 
   test("should return 201 if notification is queued successfully", async () => {
-    const ch = getChannel();
-
-    const realSendToQueue = ch.sendToQueue.bind(ch);
-    ch.sendToQueue = () => {
-      console.log("Mocked channel.sendToQueue — skipping RabbitMQ");
-      return true;
-    };
-
+    const VALID_ID = new mongoose.Types.ObjectId().toString();
     const token = jwt.sign({ id: VALID_ID }, SECRET);
 
     const existingApp = await App.create({
@@ -148,14 +155,14 @@ describe("POST send-notification", () => {
     assert.strictEqual(response.status, 201);
     assert.strictEqual(response.body.message, "Notifications queued successfully");
 
+    // No sleep needed — consumer never ran since sendToQueue was mocked
     const notification = await Notification.findOne({ appId: existingApp._id });
     assert.ok(notification, "Notification should exist in DB");
-    assert.strictEqual(notification.status, "pending"); 
-
-    ch.sendToQueue = realSendToQueue;
+    assert.strictEqual(notification.status, "pending");
   });
 
   test("should return 500 if error occurs", async () => {
+    const VALID_ID = new mongoose.Types.ObjectId().toString();
     const token = jwt.sign({ id: VALID_ID }, SECRET);
 
     const existingApp = await App.create({
@@ -175,31 +182,27 @@ describe("POST send-notification", () => {
     await UserPreference.create({
       appId: existingApp._id,
       userId: VALID_ID,
-      preferences: {
-        sms: false,
-        email: true,
-      },
-      quietHours: {
-        enabled: true,
-        start: "22:00",
-        end: "3:00",
-      },
+      preferences: { sms: false, email: true },
+      quietHours: { enabled: true, start: "22:00", end: "3:00" },
     });
 
     const stub = sinon
       .stub(Notification, "create")
       .throws(new Error("Database Error"));
 
-    const response = await request(app)
-      .post("/api/notifications/send-notification")
-      .set("x-api-key", existingApp.apiKey)
-      .set("Cookie", [`webToken=${token}`])
-      .send(payLoad);
+    try {
+      const response = await request(app)
+        .post("/api/notifications/send-notification")
+        .set("x-api-key", existingApp.apiKey)
+        .set("Cookie", [`webToken=${token}`])
+        .send(payLoad);
 
-    assert.strictEqual(response.status, 500);
-    assert.strictEqual(response.body.message, "Failed to create notification.");
-    assert.strictEqual(response.body.error, "Database Error");
-
-    stub.restore();
+      assert.strictEqual(response.status, 500);
+      assert.strictEqual(response.body.message, "Failed to create notification.");
+      assert.strictEqual(response.body.error, "Database Error");
+    } finally {
+      // Always restores even if assertions fail
+      stub.restore();
+    }
   });
 });
