@@ -1,7 +1,7 @@
 import { test, describe, before, after, beforeEach } from "node:test";
 import { clearDB, closeDB, connectDB } from "../../../config/db.js";
 import { clearRedis, closeRedis, connectRedis } from "../../../config/redis.js";
-import { closeRabbitMQ } from "../../../config/rabbitmq.js";
+import { closeRabbitMQ, connect, getChannel } from "../../../config/rabbitmq.js";
 import mongoose from "mongoose";
 import request from "supertest";
 import { app } from "../../../../app.js";
@@ -25,6 +25,12 @@ describe("POST send-notification", () => {
   before(async () => {
     await connectDB();
     await connectRedis();
+    await connect();
+
+    const ch = getChannel();
+    await ch.purgeQueue("notification_queue");
+    await ch.purgeQueue("notification_delay_queue");
+    console.log("Queues purged");
   });
 
   beforeEach(async () => {
@@ -34,7 +40,6 @@ describe("POST send-notification", () => {
 
   after(async () => {
     await sleep(5000);
-
     await closeRabbitMQ();
     await closeDB();
     await closeRedis();
@@ -93,7 +98,7 @@ describe("POST send-notification", () => {
       .set("Cookie", [`webToken=${token}`])
       .send(payLoad);
 
-      console.log(`response body: ${response.body}`)
+    console.log(`response body: ${response.body}`);
 
     assert.strictEqual(response.status, 400);
     assert.strictEqual(
@@ -103,6 +108,14 @@ describe("POST send-notification", () => {
   });
 
   test("should return 201 if notification is queued successfully", async () => {
+    const ch = getChannel();
+
+    const realSendToQueue = ch.sendToQueue.bind(ch);
+    ch.sendToQueue = () => {
+      console.log("Mocked channel.sendToQueue — skipping RabbitMQ");
+      return true;
+    };
+
     const token = jwt.sign({ id: VALID_ID }, SECRET);
 
     const existingApp = await App.create({
@@ -122,15 +135,8 @@ describe("POST send-notification", () => {
     await UserPreference.create({
       appId: existingApp._id,
       userId: VALID_ID,
-      preferences: {
-        sms: false,
-        email: true,
-      },
-      quietHours: {
-        enabled: true,
-        start: "22:00",
-        end: "3:00",
-      },
+      preferences: { sms: false, email: true },
+      quietHours: { enabled: false },
     });
 
     const response = await request(app)
@@ -140,12 +146,13 @@ describe("POST send-notification", () => {
       .send(payLoad);
 
     assert.strictEqual(response.status, 201);
-    assert.strictEqual(
-      response.body.message,
-      "Notifications queued successfully",
-    );
+    assert.strictEqual(response.body.message, "Notifications queued successfully");
 
-    await sleep(3000);
+    const notification = await Notification.findOne({ appId: existingApp._id });
+    assert.ok(notification, "Notification should exist in DB");
+    assert.strictEqual(notification.status, "pending"); 
+
+    ch.sendToQueue = realSendToQueue;
   });
 
   test("should return 500 if error occurs", async () => {

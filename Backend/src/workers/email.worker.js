@@ -4,7 +4,7 @@ import { emitUser } from '../config/socket.js';
 
 dotenv.config();
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+export const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendEmail = async (to, subject, text, meta) => {
   console.log("Using Resend to send email to:", to);

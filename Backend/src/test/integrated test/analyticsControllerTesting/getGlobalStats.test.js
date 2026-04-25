@@ -73,7 +73,7 @@ describe("GET /stats", () => {
       `response body: ${(response.body?.totalMembers, response.body?.totalNotifications)}`,
     );
 
-    assert.strictEqual(response.status, 200);
+    assert.strictEqual(response?.status, 200);
     assert.strictEqual(response.body?.totalMembers, 1);
     assert.strictEqual(response.body?.totalNotifications, 1);
   });

@@ -75,28 +75,7 @@ export const sendNotification = async (notification) => {
 
     await client.hIncrBy(`GStats`, "totalNotifications", 1);
 
-    const stats = await getNotificationStats(appId);
-    const projectStats = await getProjectStat(appId);
-
-    console.log("Emitting stats for appId:", appId, stats, projectStats);
-
-    emitStats(appId, "stats_updated", {
-      notificationStats: stats[0] || {},
-      projectStats: projectStats[0] || {},
-    });
-
-    const key = `PStats:${appId}`;
-
-    await client.hSet(key, {
-      totalSent: projectStats[0]?.total,
-      successRate: projectStats[0]?.successRate,
-    });
-
-    await client.expire(key, 86400);
   } catch (error) {
-    await Notification.findByIdAndUpdate(notification._id, {
-      status: "failed",
-    });
     throw error;
   }
 };

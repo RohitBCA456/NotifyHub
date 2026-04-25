@@ -3,6 +3,10 @@ import { getDelayMs, isWithinQuietHours } from "../utils/quiteHours.helper.js";
 import { sendNotification } from "../controllers/notification.controller.js";
 import { Notification } from "../models/notification.model.js";
 import { config } from "../../urlConfig.js";
+import { getNotificationStats } from "../services/stats.service.js";
+import { getProjectStat } from "../services/projectStats.service.js";
+import { emitStats } from "../config/socket.js";
+import { client } from "../config/redis.js";
 
 let channel;
 let connection;
@@ -20,8 +24,6 @@ async function connect() {
     await channel.prefetch(1);
 
     console.log("Connected to RabbitMQ");
-
-    // await clearQueue(MAIN_QUEUE);
 
     await channel.assertQueue(MAIN_QUEUE, { durable: true });
 
@@ -79,18 +81,38 @@ async function subscribeToQueue() {
       }
 
       await sendNotification(data);
+
       await Notification.findByIdAndUpdate(data._id, { status: "sent" });
+
+      const stats = await getNotificationStats(data.appId);
+      const projectStats = await getProjectStat(data.appId);
+
+      console.log("Emitting stats for appId:", data.appId, stats, projectStats);
+
+      emitStats(data.appId, "stats_updated", {
+        notificationStats: stats[0] || {},
+        projectStats: projectStats[0] || {},
+      });
+
+      if (projectStats[0]) {
+        const key = `PStats:${data.appId}`;
+        await client.hSet(key, {
+          totalSent: projectStats[0]?.total,
+          successRate: projectStats[0]?.successRate,
+        });
+        await client.expire(key, 86400);
+      }
 
       channel.ack(msg);
       console.log("Notification processed");
     } catch (error) {
       console.error("Error processing notification:", error.message);
 
-    if (error.code === "EAUTH" || error.name === "ValidationError") {
-    console.log("Permanent error detected. Removing from queue.");
-    channel.ack(msg);
-    return;
-  }
+      if (error.code === "EAUTH" || error.name === "ValidationError") {
+        console.log("Permanent error detected. Removing from queue.");
+        channel.ack(msg);
+        return;
+      }
 
       channel.nack(msg, false, false);
     }
@@ -105,22 +127,6 @@ async function publishToQueue(queueName, message) {
     persistent: true,
   });
 }
-
-// async function clearQueue(queueName) {
-//   try {
-//     if (!channel) {
-//       console.error("Cannot clear queue: Channel not established.");
-//       return;
-//     }
-
-//     const result = await channel.purgeQueue(queueName);
-//     console.log(`Queue "${queueName}" cleared. Messages removed: ${result.messageCount}`);
-//     return result;
-//   } catch (error) {
-//     console.error(`Failed to clear queue "${queueName}":`, error.message);
-//     throw error;
-//   }
-// }
 
 export async function closeRabbitMQ() {
   try {
@@ -139,4 +145,5 @@ export async function closeRabbitMQ() {
   }
 }
 
+export const getChannel = () => channel;
 export { connect, publishToQueue };
