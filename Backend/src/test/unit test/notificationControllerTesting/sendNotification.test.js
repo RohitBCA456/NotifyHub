@@ -1,7 +1,6 @@
 import { describe, it, mock } from "node:test";
 import assert from "assert";
 import esmock from "esmock";
-import { Notification } from "../../../models/notification.model.js";
 
 describe("Send Notification Controller", () => {
   const fakeNotification = {
@@ -37,7 +36,6 @@ describe("Send Notification Controller", () => {
       sendEmailMockFn.mock.calls[0].arguments[0],
       fakeNotification.to
     );
-
     assert.strictEqual(hIncrByMock.mock.callCount(), 1);
   });
 
@@ -46,11 +44,7 @@ describe("Send Notification Controller", () => {
       throw new Error("SMTP Error");
     });
 
-    const notificationStatusUpdateMock = mock.method(
-      Notification,
-      "findByIdAndUpdate",
-      async () => ({})
-    );
+    const findByIdAndUpdateMock = mock.fn(async () => ({}));
 
     const { sendNotification } = await esmock(
       "../../../controllers/notification.controller.js",
@@ -59,6 +53,11 @@ describe("Send Notification Controller", () => {
         "../../../config/redis.js": {
           client: {
             hIncrBy: mock.fn(async () => {}),
+          },
+        },
+        "../../../models/notification.model.js": {
+          Notification: {
+            findByIdAndUpdate: findByIdAndUpdateMock,
           },
         },
       }
@@ -71,11 +70,9 @@ describe("Send Notification Controller", () => {
       assert.strictEqual(error.message, "SMTP Error");
     }
 
-    assert.strictEqual(notificationStatusUpdateMock.mock.callCount(), 1);
-    const callArgs = notificationStatusUpdateMock.mock.calls[0].arguments;
+    assert.strictEqual(findByIdAndUpdateMock.mock.callCount(), 1);
+    const callArgs = findByIdAndUpdateMock.mock.calls[0].arguments;
     assert.strictEqual(callArgs[0], fakeNotification._id);
     assert.strictEqual(callArgs[1].status, "failed");
-
-    notificationStatusUpdateMock.mock.restore();
   });
 });
