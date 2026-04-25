@@ -65,11 +65,20 @@ describe("GET /logout", () => {
 
     const user = await User.create(existingUser);
 
+    // Verify user exists in DB before making request
+    const check = await User.findById(user._id);
+    console.log("User in DB before request:", check?._id);
+
+    // Make sure generateWebToken is awaited if it's async
     const token = await user.generateWebToken();
+    console.log("Token generated:", token ? "yes" : "no");
+    console.log("User ID in token:", jwt.decode(token));
 
     const response = await request(app)
       .get("/api/users/logout")
       .set("Cookie", [`webToken=${token}`]);
+
+    console.log("Logout response:", response.status, response.body);
 
     assert.strictEqual(response.status, 200);
     assert.strictEqual(response.body.message, "User logged out successfully.");
