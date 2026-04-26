@@ -14,19 +14,16 @@ import { clearRedis, closeRedis, connectRedis } from "../../../config/redis.js";
 
 dotenv.config();
 
-const VALID_ID = new mongoose.Types.ObjectId().toString();
-const SECRET = process.env.JWT_SECRET;
-
 describe("GET /fetch-projects", () => {
-before(async () => {
-  await connectDB();
-  await connectRedis();
-});
+  before(async () => {
+    await connectDB();
+    await connectRedis();
+  });
 
-beforeEach(async () => {
-  await clearDB();
-  await clearRedis();
-});
+  beforeEach(async () => {
+    await clearDB();
+    await clearRedis();
+  });
 
   after(async () => {
     await closeDB();
@@ -45,24 +42,22 @@ beforeEach(async () => {
   });
 
   test("should return 200 with fetched projects", async () => {
-    const existingUser = {
+    // Create user and generate token from their actual _id
+    const createdUser = await User.create({
       username: "testUser",
       imageUrl: "test.png",
       email: "test@example.com",
       sessionId: "session_123",
-    };
-
-    const createdUser = await User.create(existingUser);
+    });
 
     const token = createdUser.generateWebToken();
 
-    const existingProject = {
+    // Create app with the user's actual _id
+    const createdProject = await App.create({
       name: "serviceProvider",
       userId: createdUser._id,
       apiKey: generateApiKey(),
-    };
-
-   const createdProject = await App.create(existingProject);
+    });
 
     const response = await request(app)
       .get("/api/users/fetch-projects")
@@ -72,46 +67,35 @@ beforeEach(async () => {
 
     const fetchedApps = response.body.apps;
 
-    console.log(`fetched projects : ${fetchedApps[0]}`);
-
     assert.ok(Array.isArray(fetchedApps), "Response body should contain an apps array");
     assert.strictEqual(fetchedApps.length, 1);
-
-    assert.strictEqual(fetchedApps[0].name, existingProject.name);
-    assert.strictEqual(fetchedApps[0].apiKey, existingProject.apiKey);
+    assert.strictEqual(fetchedApps[0].name, createdProject.name);
+    assert.strictEqual(fetchedApps[0].apiKey, createdProject.apiKey);
   });
 
   test("should return 500 if error occurs", async () => {
-    const existingUser = {
+    const createdUser = await User.create({
       username: "testUser",
       imageUrl: "test.png",
       email: "test@example.com",
       sessionId: "session_123",
-    };
-
-    const createdUser = await User.create(existingUser);
+    });
 
     const token = createdUser.generateWebToken();
-
-    const existingProject = {
-      name: "serviceProvider",
-      userId: createdUser._id,
-      apiKey: generateApiKey(),
-    };
-
-    const createdProject = await App.create(existingProject);
 
     const stub = sinon
       .stub(App, "aggregate")
       .throws(new Error("Database Error"));
 
-    const response = await request(app)
-      .get("/api/users/fetch-projects")
-      .set("Cookie", `webToken=${token}`);
+    try {
+      const response = await request(app)
+        .get("/api/users/fetch-projects")
+        .set("Cookie", `webToken=${token}`);
 
-    assert.strictEqual(response.status, 500);
-    assert.strictEqual(response.body.message, "Internal server error");
-
-    stub.restore();
+      assert.strictEqual(response.status, 500);
+      assert.strictEqual(response.body.message, "Internal server error");
+    } finally {
+      stub.restore();
+    }
   });
 });
