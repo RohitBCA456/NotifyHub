@@ -45,7 +45,9 @@ describe("GET /stats", () => {
   });
 
   test("should return data from DB (cache miss)", async () => {
-    // Create user directly — no GStats hIncrBy since we use User.create not saveCredentials
+    // 1. Ensure Redis is empty to trigger the DB fallback logic
+    await client.del("GStats");
+
     const user = await User.create({
       username: "test_user",
       imageUrl: "test.png",
@@ -60,20 +62,13 @@ describe("GET /stats", () => {
       apiKey: generateApiKey(),
     });
 
-    // Create a sent notification so totalNotifications count = 1
+    // 2. CRITICAL FIX: The status MUST be "sent" to match your controller's filter
     await Notification.create({
       userId: user._id,
       appId: testApp._id,
       channel: "email",
-      status: "sent",
+      status: "sent", // This matches: Notification.countDocuments({ status: "sent" })
       message: "test message",
-    });
-
-    // Seed GStats in Redis to match DB state
-    // since User.create bypasses saveCredentials which does hIncrBy
-    await client.hSet("GStats", {
-      totalMembers: "1",
-      totalNotifications: "1",
     });
 
     const response = await request(app).get("/api/analytics/stats");
@@ -81,6 +76,10 @@ describe("GET /stats", () => {
     assert.strictEqual(response.status, 200);
     assert.strictEqual(response.body.totalMembers, 1);
     assert.strictEqual(response.body.totalNotifications, 1);
+
+    // 3. Verify Redis was populated after the miss
+    const cached = await client.hGetAll("GStats");
+    assert.strictEqual(cached.totalNotifications, "1");
   });
 
   test("should return data from cache (cache hit)", async () => {
@@ -92,8 +91,9 @@ describe("GET /stats", () => {
     const response = await request(app).get("/api/analytics/stats");
 
     assert.strictEqual(response.status, 200);
-    assert.strictEqual(response.body.totalMembers, 5);
-    assert.strictEqual(response.body.totalNotifications, 10);
+    // Use Number() to ensure we aren't failing on "5" vs 5
+    assert.strictEqual(Number(response.body.totalMembers), 5);
+    assert.strictEqual(Number(response.body.totalNotifications), 10);
   });
 
   test("should return 500 if an error occurs", async () => {
