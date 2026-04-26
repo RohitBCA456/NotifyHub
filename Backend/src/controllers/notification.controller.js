@@ -1,6 +1,6 @@
 import { sendEmail } from "../workers/email.worker.js";
 import { Notification } from "../models/notification.model.js";
-import { publishToQueue } from "../config/rabbitmq.js";
+import { queue } from "../config/rabbitmq.js";
 import { UserPreference } from "../models/userPreference.model.js";
 import { emitStats } from "../config/socket.js";
 import { App } from "../models/app.model.js";
@@ -43,7 +43,7 @@ export const createNotification = async (req, res) => {
         quietHours,
       });
 
-      await publishToQueue("notification_queue", notification);
+      await queue.publishToQueue("notification_queue", notification);
     }
 
     return res.status(201).json({
@@ -76,6 +76,8 @@ export const sendNotification = async (notification) => {
     await client.hIncrBy(`GStats`, "totalNotifications", 1);
 
   } catch (error) {
+    // Mark notification as failed so rabbitmq.js consumer can ack/nack correctly
+    await Notification.findByIdAndUpdate(notification._id, { status: "failed" });
     throw error;
   }
 };

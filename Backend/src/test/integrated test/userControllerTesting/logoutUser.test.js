@@ -1,8 +1,9 @@
-import { test, describe, before, beforeEach, afterEach, after } from "node:test";
+import { test, describe, before, beforeEach, after } from "node:test";
 import assert from "assert";
 import { closeDB, clearDB, connectDB } from "../../../config/db.js";
 import request from "supertest";
 import { app } from "../../../../app.js";
+import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import { User } from "../../../models/user.model.js";
@@ -40,9 +41,8 @@ describe("GET /logout", () => {
   });
 
   test("should return 404 if user is not found in the DB", async () => {
-    // Use a random ObjectId that doesn't exist in DB
     const validId = new mongoose.Types.ObjectId().toString();
-    const token = require("jsonwebtoken").sign({ id: validId }, process.env.JWT_SECRET);
+    const token = jwt.sign({ id: validId }, process.env.JWT_SECRET);
 
     const response = await request(app)
       .get("/api/users/logout")
@@ -53,7 +53,6 @@ describe("GET /logout", () => {
   });
 
   test("should return 200 after logout", async () => {
-    // Create user
     const user = await User.create({
       username: "testUser",
       imageUrl: "test.png",
@@ -61,7 +60,6 @@ describe("GET /logout", () => {
       sessionId: "SESSION_123",
     });
 
-    // Generate token using the user's actual _id
     const token = user.generateWebToken();
 
     const response = await request(app)

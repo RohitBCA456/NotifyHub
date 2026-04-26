@@ -22,23 +22,21 @@ describe("Send Notification Controller", () => {
       {
         "../../../workers/email.worker.js": { sendEmail: sendEmailMockFn },
         "../../../config/redis.js": {
-          client: {
-            hIncrBy: hIncrByMock,
-          },
+          client: { hIncrBy: hIncrByMock },
+        },
+        "../../../config/rabbitmq.js": {
+          queue: { publishToQueue: mock.fn(async () => {}) },
         },
       }
     );
 
     await sendNotification(fakeNotification);
 
-    // sendEmail should be called once with correct args
     assert.strictEqual(sendEmailMockFn.mock.callCount(), 1);
     assert.strictEqual(
       sendEmailMockFn.mock.calls[0].arguments[0],
       fakeNotification.to
     );
-
-    // hIncrBy should be called once to increment global stats
     assert.strictEqual(hIncrByMock.mock.callCount(), 1);
   });
 
@@ -54,11 +52,12 @@ describe("Send Notification Controller", () => {
       {
         "../../../workers/email.worker.js": { sendEmail: sendEmailErrorMock },
         "../../../config/redis.js": {
-          client: {
-            hIncrBy: mock.fn(async () => {}),
-          },
+          client: { hIncrBy: mock.fn(async () => {}) },
         },
-        // Mock Notification inside the controller's module scope
+        "../../../config/rabbitmq.js": {
+          queue: { publishToQueue: mock.fn(async () => {}) },
+        },
+        // Notification mock inside esmock scope so controller uses this instance
         "../../../models/notification.model.js": {
           Notification: {
             findByIdAndUpdate: findByIdAndUpdateMock,
@@ -74,7 +73,6 @@ describe("Send Notification Controller", () => {
       assert.strictEqual(error.message, "SMTP Error");
     }
 
-    // Notification status should be updated to failed
     assert.strictEqual(findByIdAndUpdateMock.mock.callCount(), 1);
     const callArgs = findByIdAndUpdateMock.mock.calls[0].arguments;
     assert.strictEqual(callArgs[0], fakeNotification._id);
