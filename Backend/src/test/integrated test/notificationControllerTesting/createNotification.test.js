@@ -69,7 +69,7 @@ describe("POST send-notification", () => {
     const payLoad = {
       appId: new mongoose.Types.ObjectId().toString(),
       channels: ["sms", "email"],
-      targets: ["+919365251448", "rohit7120yadav@gmail.com"],
+      targets: ["+9169879686", `test@example.com:${Date.now()}`],
       subject: "test in process",
       message: "test in process",
     };
@@ -89,7 +89,7 @@ describe("POST send-notification", () => {
     const token = jwt.sign({ id: VALID_ID }, SECRET);
 
     const existingApp = await App.create({
-      name: "serviceProvider",
+      name: "service agent",
       userId: VALID_ID,
       apiKey: generateApiKey(),
     });
@@ -97,13 +97,13 @@ describe("POST send-notification", () => {
     const payLoad = {
       appId: existingApp._id.toString(),
       channels: ["email"],
-      targets: { email: "rohit7120yadav@gmail.com" },
+      targets: { email: `test@example.com:${Date.now()}` },
       subject: "test in process",
       message: "test in process",
     };
 
     await UserPreference.create({
-      appId: existingApp._id,
+      appId: existingApp._id.toString(),
       userId: VALID_ID,
       preferences: { sms: true, email: false },
     });
@@ -126,7 +126,7 @@ describe("POST send-notification", () => {
     const token = jwt.sign({ id: VALID_ID }, SECRET);
 
     const existingApp = await App.create({
-      name: "serviceProvider",
+      name: "test agent",
       userId: VALID_ID,
       apiKey: generateApiKey(),
     });
@@ -134,13 +134,13 @@ describe("POST send-notification", () => {
     const payLoad = {
       appId: existingApp._id.toString(),
       channels: ["email"],
-      targets: { email: "rohit7120yadav@gmail.com" },
+      targets: { email: `test@example.com:${Date.now()}` },
       subject: "test in process",
       message: "test in process",
     };
 
     await UserPreference.create({
-      appId: existingApp._id,
+      appId: existingApp._id.toString(),
       userId: VALID_ID,
       preferences: { sms: false, email: true },
       quietHours: { enabled: false },
@@ -166,7 +166,7 @@ describe("POST send-notification", () => {
     const token = jwt.sign({ id: VALID_ID }, SECRET);
 
     const existingApp = await App.create({
-      name: "serviceProvider",
+      name: "test agent",
       userId: VALID_ID,
       apiKey: generateApiKey(),
     });
@@ -174,13 +174,13 @@ describe("POST send-notification", () => {
     const payLoad = {
       appId: existingApp._id.toString(),
       channels: ["email"],
-      targets: { email: "rohit7120yadav@gmail.com" },
+      targets: { email: `test@example.com:${Date.now()}` },
       subject: "test in process",
       message: "test in process",
     };
 
     await UserPreference.create({
-      appId: existingApp._id,
+      appId: existingApp._id.toString(),
       userId: VALID_ID,
       preferences: { sms: false, email: true },
       quietHours: { enabled: true, start: "22:00", end: "3:00" },
